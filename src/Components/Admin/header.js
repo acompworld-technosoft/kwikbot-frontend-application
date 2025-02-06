@@ -3,11 +3,13 @@ import { Dropdown } from "react-bootstrap";
 
 const Header = () => {
   const location = useLocation();
+ 
 
   ///=================Logout===================///
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/";
+   
   };
 
   return (
@@ -15,9 +17,9 @@ const Header = () => {
       <header>
         <nav class="navbar navbar-expand-lg">
           <div class="container">
-            <a class="navbar-brand" href="#">
+            <Link to="/" class="navbar-brand" >
               <img src="/images/kwikbot-bran-logo.png" alt="" />
-            </a>
+            </Link>
             <button
               class="navbar-toggler"
               type="button"
@@ -32,48 +34,15 @@ const Header = () => {
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
               <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
               <li class="nav-item">
-                  <a class="nav-link">
-                    <Link
-                      to="/admin/lead"
-                      className={`nav-link ${
-                        location.pathname.match(
-                          /^\/admin\/(lead|leadhistory)$/
-                        )
-                          ? "active"
-                          : ""
-                      }`}
-                    >
-                      Leads{" "}
-                    </Link>
-                  </a>
-                </li>
-
-                <li class="nav-item">
                   <Link
-                    to="/admin/conversation"
+                    to="/admin/lead"
                     className={`nav-link ${
-                      location.pathname === "/admin/conversation" ? "active" : ""
+                      location.pathname === "/admin/lead" ? "active" : ""
                     }`}
                   >
-                    Conversations
+                    Lead
                   </Link>
                 </li>
-
-                <li class="nav-item">
-                  <Link
-                    to="/admin/mysubscribption"
-                    className={`nav-link ${
-                      location.pathname.match(
-                        /^\/admin\/(mysubscribption|billinginformation|invoices)$/
-                      )
-                        ? "active"
-                        : ""
-                    }`}
-                  >
-                    Subscription
-                  </Link>
-                </li>
-
                 <li class="nav-item">
                   <a class="nav-link" aria-current="page" href="#">
                     <Link
@@ -89,7 +58,31 @@ const Header = () => {
                       Profile
                     </Link>
                   </a>
-                </li>             
+                </li>
+                <li class="nav-item">
+                  <Link
+                    to="/admin/coversation"
+                    className={`nav-link ${
+                      location.pathname === "/admin/coversation" || location.pathname === "/admin/conversation/:id" ? "active" : ""
+                    }`}
+                  >
+                    Conversation
+                  </Link>
+                </li>
+                <li class="nav-item">
+                  <Link
+                    to="/admin/mysubscribption"
+                    className={`nav-link ${
+                      location.pathname.match(
+                        /^\/admin\/(mysubscribption|billinginformation|invoices)$/
+                      )
+                        ? "active"
+                        : ""
+                    }`}
+                  >
+                    Subscription
+                  </Link>
+                </li>
 
                 <li class="nav-item">
                   <a class="nav-link">
@@ -108,9 +101,9 @@ const Header = () => {
                   </a>
                 </li>
 
-                
+               
 
-
+        
                 <li class="nav-item">
                  
                     <a class="nav-link">

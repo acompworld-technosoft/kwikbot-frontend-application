@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Header from "./header";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { passwordReset } from "../../Services/Admin/userApiCall";
+import {  resetpassword } from "../../Services/Admin/forgotPasswordapi";
 import {
   EyeInvisibleOutlined,
   EyeTwoTone,
@@ -18,9 +18,10 @@ const ChangePassword = () => {
   const stateData = location.state || {};
   const { email } = stateData;
   const [passwordError, setPasswordError] = useState("");
+
   const [data, setData] = useState({
-    oldPassword: "",
     newPassword: "",
+    confirmPassword: "",
   });
 
   const handleChange = (e) => {
@@ -30,38 +31,45 @@ const ChangePassword = () => {
 
   const saveChange = async () => {
     const newErrors = {};
-    if (!data.oldPassword) {
-      newErrors.oldPassword = "Old Password is required";
-    }
     if (!data.newPassword) {
       newErrors.newPassword = "New Password is required";
-    } else if (data.oldPassword === data.newPassword) {
-      newErrors.newPassword = "Old Password and New Password can't be same";
     } else if (data.newPassword.length < 6) {
       newErrors.newPassword = "Password must be at least 6 characters";
-    } else if (data.newPassword.length > 15) {
-      newErrors.newPassword = "Password must be at most 15 characters";
-    } else if (!/\d/.test(data.newPassword)) {
-      newErrors.newPassword = "Password must contain at least one digit";
-    } else if (!/[!@#$%^&*]/.test(data.newPassword)) {
+    } else if (!data.newPassword.match(/[a-z]/g)) {
+      newErrors.newPassword =
+        "Password must contain at least one lowercase letter";
+    } else if (!data.newPassword.match(/[A-Z]/g)) {
+      newErrors.newPassword =
+        "Password must contain at least one uppercase letter";
+    } else if (!data.newPassword.match(/[0-9]/g)) {
+      newErrors.newPassword = "Password must contain at least one number";
+    } else if (!data.newPassword.match(/[^a-zA-Z\d]/g)) {
       newErrors.newPassword =
         "Password must contain at least one special character";
     }
+
+    if (!data.confirmPassword)
+      newErrors.confirmPassword = "Confirm Password is required";
+    if (data.newPassword !== data.confirmPassword)
+      newErrors.confirmPassword = "Password does not match";
 
     setPasswordError(newErrors);
     if (Object.keys(newErrors).length === 0) {
       const newData = {
         email,
-        oldPassword: data.oldPassword,
-        newPassword: data.newPassword,
+        password: data.newPassword,
+        confirmPassword: data.confirmPassword,
       };
 
       try {
-        const response = await passwordReset(newData);
-
-        toast.success("Password changed successfully");
+        const response = await resetpassword(newData);
+        if (response.success === true) {
+          toast.success("Password changed successfully");
+          navigate("/admin/profile");
+        }
       } catch (error) {
         toast.error(error.response.data.message);
+        console.log(error);
       }
     }
   };
@@ -73,7 +81,6 @@ const ChangePassword = () => {
       [name]: "",
     }));
   };
-
  
   return (
     <div>
@@ -92,28 +99,6 @@ const ChangePassword = () => {
                   <form action="" class="from-admin-pr">
                     <div class="position-relative">
                       <Input.Password
-                        name="oldPassword"
-                        value={data.oldPassword}
-                        onChange={handleChange}
-                        className="input-filed-profile"
-                        placeholder="Old Password"
-                        onFocus={handleInputFocus}
-                        iconRender={(visible) =>
-                          visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
-                        }
-                      />
-                      <label for="" class="po-ab-label">
-                        Old Password
-                      </label>
-                    </div>
-                    <div style={{ height: "50px", paddingTop: "5px" }}>
-                      <span style={{ color: "red", textAlign: "center" }}>
-                        {passwordError.oldPassword}
-                      </span>
-                    </div>
-
-                    <div class="position-relative">
-                      <Input.Password                  
                         name="newPassword"
                         value={data.newPassword}
                         onChange={handleChange}
@@ -124,7 +109,6 @@ const ChangePassword = () => {
                           visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
                         }
                       />
-
                       <label for="" class="po-ab-label">
                         New Password
                       </label>
@@ -135,6 +119,36 @@ const ChangePassword = () => {
                       </span>
                     </div>
 
+                    <div class="position-relative">
+                      <Input.Password
+                        name="confirmPassword"
+                        value={data.confirmPassword}
+                        onChange={handleChange}
+                        className="input-filed-profile"
+                        placeholder="Confirm Password"
+                        onFocus={handleInputFocus}
+                        iconRender={(visible) =>
+                          visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                        }
+                      />
+
+                      <label for="" class="po-ab-label">
+                        Confirm Password
+                      </label>
+                    </div>
+                    <div style={{ height: "50px", paddingTop: "5px" }}>
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {passwordError.confirmPassword}
+                      </span>
+                    </div>
+
+
+                    <div style={{ height: "50px", paddingTop: "5px" }}>
+                      <span style={{ color: "#272727", textAlign: "center" , fontSize:"13px"}}>
+                    *Password must contain at least one number, one uppercase letter and one special character and at least 6 or more characters  </span>
+                    </div>
+
+               
                     <div class="text-right mt-5">
                       <a
                         class="cancel"

@@ -1,69 +1,79 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Button, Container, Row, Col } from "react-bootstrap";
+import { Modal, Button, Container, Row, Col, CloseButton } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
-import { getSingleClientData, updateClientData } from '../../../Services/SuperAdmin/apiCall';
+import {
+  updateClientData,
+  blockClient,
+} from "../../../Services/SuperAdmin/apiCall";
 import { handleValidation } from "./validation";
 import { toast } from "react-toastify";
 
-const steps = ["Step 1: Add User", "Step 2: "];
+const steps = [" Add User", "Create Plan"];
 
-const ClientEditModel = ({ show, onHide, userId }) => {
+const ClientEditModel = ({
+  show2,
+  onHide2,
+  editclientdata,
+  clientId1,
+  userId,
+}) => {
   const [currentStep, setCurrentStep] = useState(0);
-  //---- handle next and previous button==============
+  const [isBlocked, setIsBlocked] = useState(editclientdata.isActive);
+  console.log("isBlocked", editclientdata);
 
-  const handleNext = () => {
-   console.log("currentstep",currentStep)
+  const [isSetUpFeeWaived, setIsSetUpFeeWaived] = useState(false);
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
+  // ---- handle next and previous button ----
+
+  const handleNextButton = () => {
     try {
       const isValid = handleValidation(formData, setErrorMessage);
-
       if (isValid) {
         if (currentStep < steps.length - 1) {
           setCurrentStep(currentStep + 1);
         }
       }
     } catch (error) {
-      alert(error, "errpr in validation");
+      toast.error("Error in validation"); // Fixed the typo here
     }
   };
-  const handlePrevious = () => {
-    console.log("currentstep",currentStep)
+
+  const handlePreviousButton = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
-
   ///================== get client data by id================
-  const [clientData, setClientData] = useState([]);
-  const [clientId, setClientId] = useState("");
+
   const getClientData = async () => {
     try {
-      console.log("clientId", clientId);  
-      const res = await getSingleClientData({ clientId: userId });
+      // Create a new copy of formData
+      const newData = { ...formData };
+      // Populate user data
+      newData.user.firstName = editclientdata.users[0].firstName;
+      newData.user.lastName = editclientdata.users[0].lastName;
+      newData.user.email = editclientdata.users[0].email;
+      newData.user.phone = editclientdata.users[0].phone;
+      newData.user.country = editclientdata.users[0].country;
+      newData.user.password = editclientdata.users[0].password;
 
-      console.log("res", res);  
-      setClientId(res.data._id);
-      const newData = { ...formData }; // Create a new copy of formData
-      const clientData = res.data;
-
-      console.log("clientData", clientData);
-      newData.user.firstName = clientData.user.firstName;
-      newData.user.lastName = clientData.user.lastName;
-      newData.user.email = clientData.user.email;
-      newData.user.phone = clientData.user.phone;
-      newData.user.country = clientData.user.country;
-      newData.user.password = clientData.user.password;
-      newData.client.organizationName = clientData.client.organizationName;
-      newData.client.industry = clientData.client.industry;
-      newData.client.botCode = clientData.client.botCode;
-      newData.client.websiteUrl = clientData.client.websiteUrl;
+      // Populate client data
+      newData.client.organizationName = editclientdata.organizationName;
+      newData.client.industry = editclientdata.industry;
+      newData.client.botCode = editclientdata.botCode;
+      newData.client.websiteUrl = editclientdata.websiteUrl;
+      // Populate subscription plan data (assuming there's only one plan)
       newData.client.subscriptionPlans[0].setUpAmount =
-        clientData.client.subscriptionPlans[0].setUpAmount;
+        editclientdata.subscriptionPlans[editclientdata.subscriptionPlans.length-1].setUpAmount;
       newData.client.subscriptionPlans[0].amount =
-        clientData.client.subscriptionPlans[0].amount;
+        editclientdata.subscriptionPlans[editclientdata.subscriptionPlans.length-1].amount;
       newData.client.subscriptionPlans[0].frequency =
-        clientData.client.subscriptionPlans[0].frequency;
-      setClientData(clientData);
+        editclientdata.subscriptionPlans[editclientdata.subscriptionPlans.length-1].frequency;
+      newData.client.subscriptionPlans[0].isSetUpAmountApplicable =
+        editclientdata.subscriptionPlans[editclientdata.subscriptionPlans.length-1].isSetUpAmountApplicable;
       setFormData(newData); // Update formData with the new copy
     } catch (error) {
       console.log(error);
@@ -78,8 +88,10 @@ const ClientEditModel = ({ show, onHide, userId }) => {
     frequency: "",
     amount: "",
     setUpAmount: "",
+    isSetUpAmountApplicable: "",
     planName: "Basic Plan",
     currency: "USD",
+    GST: 0,
     applicableTaxPercentage: 0,
     isDeleted: false,
     description: [
@@ -102,14 +114,19 @@ const ClientEditModel = ({ show, onHide, userId }) => {
       email: "",
       phone: "",
       password: "",
+      passwordrewrite: "",
+      botClientId: "",  
     },
     client: {
       organizationName: "",
       industry: "",
       subscriptionPlans: [subscriptionPlan],
       contents: [],
+      botCode: "",
+      websiteUrl: "",
     },
   });
+
 
   ///---- Add User form handle  input change function ------------------
 
@@ -163,25 +180,37 @@ const ClientEditModel = ({ show, onHide, userId }) => {
       const errors = {};
       if (!formData.client.subscriptionPlans[0].setUpAmount) {
         errors.setUpAmount = " setUpAmount is required";
+      }else if (formData.client.subscriptionPlans[0].setUpAmount <= 0) {
+        errors.amount = " setUpAmount should be greater than 0";
       }
+
       if (!formData.client.subscriptionPlans[0].amount) {
         errors.amount = "Amount is required";
+      }else if (formData.client.subscriptionPlans[0].amount <= 0) {
+        errors.amount = "Amount should be greater than 0";
       }
-      if (!formData.client.subscriptionPlans[0].frequency) {
-        errors.frequency = "Frequency is required";
-      }
-      setErrorMessage(errors);
 
+      if (!formData.client.subscriptionPlans[0].frequency) {
+        errors.frequency = "Time Period is required";
+      }
+
+      
+      setErrorMessage(errors);
+      console.log("errors--", errors);
       if (Object.keys(errors).length === 0) {
         try {
           const newData = formData;
-          const apiResponse = await updateClientData({ newData, clientId });
+          console.log("newData--", newData);
+          const apiResponse = await updateClientData({
+            newData,
+            clientId: clientId1,
+          });
           toast.success(apiResponse.message);
           console.log(apiResponse);
 
           setErrorMessage({});
 
-          onHide();
+          onHide2();
           setCurrentStep(0);
         } catch (error) {
           if (error.response.data.message) {
@@ -195,6 +224,60 @@ const ClientEditModel = ({ show, onHide, userId }) => {
       toast.error(error.response.data.message);
     }
   };
+
+  //============================== block user ==============================//
+
+  const handleBlockUser = async (e) => {
+    e.preventDefault();
+    try {
+      const blockdata = {
+        is_active: "false",
+      };
+      const apiResponse = await blockClient({ clientId: userId, blockdata });
+      if (apiResponse.success == true) {
+        toast.success("User Blocked Successfully");
+        onHide2();
+      }
+    } catch (error) {
+      if (error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("server error");
+      }
+    }
+  };
+
+///================== handle unblock user ===========================
+  const handleUnBlockUser = async (e) => {
+    e.preventDefault();
+    try {
+      const blockdata = {
+        is_active: "true",
+      };
+      const apiResponse = await blockClient({ clientId: userId, blockdata });
+      if (apiResponse.success == true) {
+        toast.success("User Unblocked Successfully");
+        onHide2();
+      }
+    } catch (error) {
+      if (error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("server error");
+      }
+    }
+  };
+
+
+  // ===================== check box =====================//
+  const handleCheckboxChange = (event) => {
+    setIsSetUpFeeWaived(event.target.checked);
+    setSubscriptionPlan((prevPlan) => ({
+      ...prevPlan,
+      isSetUpAmountApplicable: !event.target.checked, // Invert the value
+    }));
+  };
+
   ///------- Add User form handle  input focus function ------------------
 
   const handleInputFocus = (e) => {
@@ -205,36 +288,49 @@ const ClientEditModel = ({ show, onHide, userId }) => {
       [name]: "",
     }));
   };
-
   return (
     <>
-      <Modal show={show} onHide={onHide} size="lg" centered>
-        <Modal.Header closeButton>
+      <Modal
+        key={"EditShow"}
+        show={show2}
+        onHide={onHide2}
+        animation={true}
+        size="lg"
+        centered
+      >
+        <Modal.Header>
+        <button className="custom-close-button" onClick={onHide2}>
+            &times;
+          </button>
           <Modal.Title>
-            <div className="progressBar">
-              {steps.map((step, index) => (
-                <div className="progressBarStep" key={index}>
-                  <div
-                    className={`stepCircle ${
-                      index < currentStep ? "active" : ""
-                    }`}
-                  >
-                    {index + 1}
+            <div className="modelhead">
+              <div className="progressBar">
+                {steps.map((step, index) => (
+                  <div className="progressBarStep" key={index}>
+                    <div
+                      className={`stepCircle ${
+                        index < currentStep ? "active" : ""
+                      }`}
+                    >
+                      {index + 1}
+                    </div>
+                    <div className="setpmodel">{step}</div>
+                    {index < currentStep && index < steps.length - 1 && (
+                      <div className="progressBarFill" />
+                    )}
                   </div>
-                  {index < currentStep && index < steps.length - 1 && (
-                    <div className="progressBarFill" />
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {currentStep === 0 && (
             <div>
-              <Row className="mt-4 mb-4">
+              <Row className="mt-4">
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">First Name </label>
                     <input
                       type="text"
                       placeholder=""
@@ -246,15 +342,18 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="firstName"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">First Name </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.firstName}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.firstName}
+                      </span>
+                    </div>
                   </div>
                 </Col>
 
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Last Name </label>
                     <input
                       type="text"
                       placeholder=""
@@ -266,17 +365,20 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="lastName"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Last Name </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.lastName}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.lastName}
+                      </span>
+                    </div>
                   </div>
                 </Col>
               </Row>
 
-              <Row className="mb-4">
+              <Row className="">
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Email ID</label>
                     <input
                       type="text"
                       placeholder=""
@@ -288,18 +390,20 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="email"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Email ID</label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.email}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.email}
+                      </span>
+                    </div>
                   </div>
                 </Col>
 
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Phone No </label>
                     <input
-                      type="text"
-                      placeholder=""
+                      type="tel"
                       className="input-model"
                       onChange={(event) =>
                         handleInputChange(event, "user", "phone")
@@ -308,17 +412,20 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="phone"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Phone No </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.phone}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.phone}
+                      </span>
+                    </div>
                   </div>
                 </Col>
               </Row>
 
-              <Row className="mb-4">
+              <Row className="">
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Organization name </label>
                     <input
                       type="text"
                       placeholder=""
@@ -330,15 +437,18 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="organizationName"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Organization name </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.organizationName}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.organizationName}
+                      </span>
+                    </div>
                   </div>
                 </Col>
 
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Industry </label>
                     <input
                       type="text"
                       placeholder=""
@@ -350,17 +460,20 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="industry"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Industry </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.industry}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.industry}
+                      </span>
+                    </div>
                   </div>
                 </Col>
               </Row>
 
-              <Row className="mb-4">
+              <Row className="">
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Choose Password </label>
                     <input
                       type="text"
                       placeholder=""
@@ -372,15 +485,18 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="password"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Choose Password </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.password}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.password}
+                      </span>
+                    </div>
                   </div>
                 </Col>
 
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Rewrite Password </label>
                     <input
                       type="text"
                       placeholder=""
@@ -392,17 +508,20 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="passwordrewrite"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Rewrite Password </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.passwordrewrite}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.passwordrewrite}
+                      </span>
+                    </div>
                   </div>
                 </Col>
               </Row>
 
-              <Row className="mb-4">
+              <Row className="">
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Country </label>
                     <input
                       type="text"
                       placeholder=""
@@ -414,15 +533,18 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="country"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Country </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.country}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.country}
+                      </span>
+                    </div>
                   </div>
                 </Col>
 
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Bot Client ID </label>
                     <input
                       type="text"
                       placeholder=""
@@ -432,19 +554,21 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       }
                       value={formData.client.botCode}
                       name="botCode"
-                      onFocus={handleInputFocus}
+                      onFocus={handleInputFocus}    
                     />
-                    <label className="toplabel">Bot Client Code </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.botCode}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.botCode}
+                      </span>
+                    </div>
                   </div>
                 </Col>
               </Row>
-
-              <Row className="mb-4">
-              <Col xs={6}>
+              <Row className="">
+                <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Website URL </label>
                     <input
                       type="text"
                       placeholder=""
@@ -455,26 +579,28 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       value={formData.client.websiteUrl}
                       name="websiteUrl"
                       onFocus={handleInputFocus}
+
                     />
-                    <label className="toplabel">Website URL </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.websiteUrl}
-                    </span>
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.websiteUrl}
+
+                      </span>
+                    </div>
                   </div>
                 </Col>
-
-                <Col xs={6}></Col>
               </Row>
             </div>
           )}
 
           {currentStep === 1 && (
             <div>
-              <Row className="mt-4 mb-4">
+              <Row className="mt-4">
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Set Up Fee </label>
                     <input
-                      type="text"
+                      type="number"
                       placeholder=""
                       className="input-model"
                       value={formData.client.subscriptionPlans[0].setUpAmount}
@@ -482,27 +608,32 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       name="setUpAmount"
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Set Up Free </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.setUpAmount}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.setUpAmount}
+                      </span>
+                    </div>
 
                     <div>
                       <input
                         type="checkbox"
-                        id="huey"
-                        name="drone"
+                        id="waveSetUpFeeCheckbox"
+                        name="waveSetUpFee"
                         value="huey"
+                        onChange={handleCheckboxChange}
+                        checked={isSetUpFeeWaived}
                       />
-                      wave off set up fees for this user
+                      {"   "} {  "   "} Waive off set up fees for this user
                     </div>
                   </div>
                 </Col>
               </Row>
 
-              <Row className="mb-4">
+              <Row className="mt-4">
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Subscription Amount ($)</label>
                     <input
                       type="text"
                       className="input-model"
@@ -511,15 +642,18 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       onChange={(event) => handleSubscriptionChanges(event)}
                       onFocus={handleInputFocus}
                     />
-                    <label className="toplabel">Subscription Amount</label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.amount}
-                    </span>
+
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.amount}
+                      </span>
+                    </div>
                   </div>
                 </Col>
 
                 <Col xs={6}>
                   <div className="input-topposition">
+                    <label className="toplabel">Time Period </label>
                     <Form.Select
                       aria-label="Default select example"
                       className="input-model"
@@ -533,10 +667,11 @@ const ClientEditModel = ({ show, onHide, userId }) => {
                       <option value="Yearly">Yearly</option>
                     </Form.Select>
 
-                    <label className="toplabel">Time Period </label>
-                    <span style={{ color: "red", textAlign: "center" }}>
-                      {errorMessage.frequency}
-                    </span>
+                    <div className="email-content-h ">
+                      <span style={{ color: "red", textAlign: "center" }}>
+                        {errorMessage.frequency}
+                      </span>
+                    </div>
                   </div>
                 </Col>
               </Row>
@@ -545,20 +680,56 @@ const ClientEditModel = ({ show, onHide, userId }) => {
         </Modal.Body>
         <Modal.Footer>
           {currentStep > 0 && (
-            <Button variant="secondary" onClick={handlePrevious}>
+            <Button variant="secondary" onClick={handlePreviousButton}>
               Previous
             </Button>
           )}
           {currentStep < steps.length - 1 && (
-            <Button variant="primary" onClick={handleNext}>
-              Next
-            </Button>
+            <>
+              {!isBlocked ? (
+                <Button variant="secondary" onClick={handleUnBlockUser}>
+                  Unblock User
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={handleShow}>
+                  Block User
+                </Button>
+              )}
+
+              <Button variant="primary" onClick={handleNextButton}>
+                Save & Next
+              </Button>
+            </>
           )}
-          {currentStep === steps.length - 1 && (
-            <Button variant="primary" onClick={(e) => handleSaveChanges(e)}>
+          {currentStep == steps.length - 1 && (
+            <Button variant="primary" onClick={handleSaveChanges}>
               Finish
             </Button>
           )}
+        </Modal.Footer>
+      </Modal>
+    
+
+
+      <Modal
+        show={show}
+        onHide={handleClose}
+        backdrop="static"
+        keyboard={false}
+        centered
+        className="modal-blur"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Block User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are You absolutely sure you want to do that?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleBlockUser}>
+            Block
+          </Button>
         </Modal.Footer>
       </Modal>
     </>

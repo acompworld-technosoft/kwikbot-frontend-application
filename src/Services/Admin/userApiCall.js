@@ -29,9 +29,9 @@ export const billingInfo = async ({clientId}) => {
     return api.data
     };
 
-export const BillingInfoUpdate = async ({updateBillingInfo}) => {
+export const BillingInfoUpdate = async ({clientId,updateBillingInfo}) => {
     const api = await apiRequest({
-        url: `/billing-info`,
+        url: `/billing-info?clientId=${clientId}`,
         method: "put",
         body: updateBillingInfo,
         header: true,
@@ -52,15 +52,6 @@ export const passwordReset = async (newData) => {
 export const getConversationData = async (userId) => {
     const api = await apiRequest({
         url: `/clients/conversations/${userId}`,
-        method: "get",
-        header: true,
-    });
-    return api.data;
-}
-
-export const getLeadData = async (botCode) => {
-    const api = await apiRequest({
-        url: `/bot-leads/botCode/${botCode}`,
         method: "get",
         header: true,
     });

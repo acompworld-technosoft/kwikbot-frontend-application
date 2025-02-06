@@ -129,7 +129,7 @@ label.po-ab-label {
     font-style: normal;
     font-weight: 600;
     padding: 0px 9px;
-    z-index: 111111;
+    z-index: 111;
 }
 .heading-profile{
     margin-bottom: 3rem;
@@ -153,8 +153,14 @@ margin-bottom: 4rem;
 .profile-page{
     border: 1px solid rgba(255, 255, 255, 0.60);
     background: #FAF9F7;
-    min-height: 100vh;
-}
+  
+  }
+
+  .heightcontrol{
+    min-height: 50vw;
+    height: 100%;
+  }
+
 .set-power a{
     color: #3B42C4;
     font-family: 'Poppins';
@@ -165,6 +171,25 @@ margin-bottom: 4rem;
     padding: 0 1rem;
 
 }
+.no-conversation-found{
+  font-size: revert;
+    color: #474747;
+    padding: 28px;
+    margin-top: 226px;
+    text-align: center;
+
+}
+.text-center-invoice{
+  text-align: center;
+}
+
+.text-center-invoice {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px; /* You can adjust the height as needed */
+}
+
 .save-changes{
     border-radius: 180px;
     background: #3B42C4;
@@ -311,6 +336,7 @@ font-weight: 600;
 font-family: 'Poppins';
 font-size: 30px;
 font-style: normal;
+text-align: center!important;
 font-weight: 700;
 line-height: 68px; /* 226.667% */
 }
@@ -458,7 +484,7 @@ a.terms-link{
 .confirm-message {
     width: 405px;
     padding: 4rem 3rem;
-    background-image: "/images/confirm-meassge-bg.png";
+    background-image: url('/public/images//confirm/confirm-meassge-bg.png');
     background-repeat: no-repeat;
     background-size: 100% 100%;
     margin-top: 5rem;
@@ -471,12 +497,19 @@ section.confirm-message-section {
     align-items: center;
 }
 
+.modal-blur {
+  backdrop-filter: blur(5px); /* Adjust the blur intensity as needed */
+  background-color: rgba(0, 0, 0, 0.5); /* Adjust the background color and opacity as needed */
+}
+
+
 .confirm-message h3{
     color: #FFF;
     font-family: 'Poppins';
     font-size: 30px;
     font-style: normal;
     font-weight: 700;
+
 
 text-align: center;
 margin-top: 2rem;
@@ -530,6 +563,16 @@ margin: 0;
 
 .canbtn-s {
 padding: 10px 30px;
+color: #3B42C4 !important;
+border-radius: 105px;
+ background: rgba(59, 66, 196, 0.12) !important;
+ margin-right: none !important;
+}
+.canbtn-s:hover{
+    background: #3B42C4 !important;
+    color: #FFF !important;
+    border-radius: 105px;
+    border: none;
 }
 
 .sm-gr-fnt{
@@ -638,11 +681,13 @@ font-style: normal;
 
   }
   td {
+    padding: 10px 28px !important;
     color: #6F6F6F !important;
 font-family: 'Poppins';
 font-size: 15px;
 font-style: normal;
 font-weight: 500;
+/* text-align: center; */
 
 }
 tr.skyblue-light td{
@@ -785,26 +830,37 @@ a.active.pos-abso-top {
 }
 
 .coversation-heading{
-    color: #3B42C4;
+    color:#FFFFFF ;
 font-family: 'Poppins';
 font-size: 20px;
 font-style: normal;
 font-weight: 600;
 line-height: 38px; /* 190% */
 border-radius: 20px 0px 0px 0px;
-background: #E7E8F8;
-padding: 1rem 1rem;
-height: 5rem;
-}
-.conversation-chat-heading{
-    border-radius: 0px 20px 0px 0px;
 background: #3B42C4;
 padding: 1rem 2rem;
 height: 5rem;
 }
+.conversation-chat-heading{
+    border-radius: 0px 20px 0px 0px;
+    background: #3B42C4;
+padding: 1rem 2rem;
+height: 5rem;
+}
+
+.chat-bot{
+  text-align-last: right;
+  max-width: 366px;
+  float: right;
+}
+.chat-visitor {
+  text-align-last: left;
+  max-width: 366px;
+  /* float: left; */
+}
 
 .conversation-chat-heading h4{
-    color: #FFF;
+  color: #FFFFFF;
 font-family: 'Poppins';
 font-size: 18px;
 font-style: normal;
@@ -813,7 +869,7 @@ margin: 0;
 }
 
 .conversation-chat-heading p{
-    color: rgba(255, 255, 255, 0.80)!important;
+    color: rgba(255, 255, 255, 0.80);
 font-family: 'Poppins';
 font-size: 14px;
 font-style: normal;
@@ -821,6 +877,7 @@ font-weight: 500;
 margin: 0;
 
 }
+
 
 .first-conversation-list {
     width: 33%;
@@ -831,7 +888,7 @@ margin: 0;
 }
 
 .name-date-conversation h6{
-    color: #282734;
+    color:#6f6f6f;
 font-family: 'Poppins';
 font-size: 16px;
 font-style: normal;
@@ -858,7 +915,7 @@ line-height: 24px; /* 171.429% */
 }
 
 .padding-namedate.d-flex.justify-content-between {
-    padding: 1rem 1rem;
+    padding: 1rem 2rem;
     border-bottom: 1px solid #E7E7E7;
     background-color: #FFFFFFFF;
 }
@@ -868,7 +925,7 @@ font-family: 'Poppins';
 font-size: 16px;
 font-style: normal;
 font-weight: 500;
-line-height: 22px; /* 137.5% */
+/* line-height: 22px; 137.5% */
 margin: 0;
 }
 .chat-content-box span{
@@ -877,16 +934,25 @@ font-family: 'Poppins';
 font-size: 14px;
 font-style: normal;
 font-weight: 500;
-line-height: 24px; /* 171.429% */
+/* line-height: 24px; 171.429% */
 }
 
 .chat-content-box {
     border-radius: 30px;
     background: #FAF9F7;
     padding: 1.5rem 3rem;
+    max-width: 365px;
 }
+
 .chat-name {
     padding: 1rem 2rem;
+}
+.chat-name-bot{
+    margin-bottom: 10px;
+    padding-left: 35%;
+}
+.right-side {
+  float: right;
 }
 .chat-name h6{
     color: #282734;
@@ -894,7 +960,7 @@ font-family: 'Poppins';
 font-size: 16px;
 font-style: normal;
 font-weight: 600;
-line-height: 24px; /* 150% */
+/* line-height: 24px; 150% */
 }
 
 .ai-chatvisitor{
@@ -1161,9 +1227,9 @@ line-height: 22px; /* 137.5% */
   
   input.input-model,select.input-model.form-select {
     width: 100%;
-    height: 3rem;
+    /* height: 3rem; */
     border: 1px solid #cccc;
-    padding: 17px;
+    padding: 11px;
     background-color: transparent;
   }
   
@@ -1171,10 +1237,10 @@ line-height: 22px; /* 137.5% */
     position: relative;
   }
   label.toplabel {
-    position: absolute;
+    /* position: absolute;
     top: -15px;
     left: 12px;
-    background: white;
+    background: white; */
     padding: 4px;
   }
   
@@ -1206,6 +1272,11 @@ line-height: 22px; /* 137.5% */
     height: 3rem;
     border: 1px solid #cccc;
     padding: 10px 10px;
+
+  }
+
+  .h-100px{
+    width: 120px;
   }
   
   .search-button {
@@ -1220,6 +1291,10 @@ line-height: 22px; /* 137.5% */
   
   .search-button:hover {
     background-color: #3b42c4 !important;
+  }
+
+  .dropdown-toggle::after{
+    display: none !important;
   }
   
   /* side bar new  */
@@ -1271,7 +1346,15 @@ line-height: 22px; /* 137.5% */
   .right-content{
     padding: 40px;
     width: 100%;
+    height: 95vh;
+    overflow-y: scroll;
   }
+
+  .right-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+
   
   .actived{
     color: #FFFFFF !important;
@@ -1312,6 +1395,16 @@ line-height: 22px; /* 137.5% */
     flex: 1;
     display: flex;
     align-items: center;
+    position: relative;
+  }
+  .modelhead{
+    padding: 1rem 2rem;
+  }
+  .setpmodel{
+    position: absolute;
+    bottom: -25px;
+    font-size: 20px;
+    left: 0;
   }
   
   .stepCircle {
@@ -1336,7 +1429,201 @@ line-height: 22px; /* 137.5% */
   .modal-header {
     padding: 2rem 1rem !important;
   }
-  
-  .text-muted{font-size: 14px !important; color: #ababab !important;}
+  .superadminNavbar {
+   
+      padding-left: 1196px;
+  }
+
+  a.nav-link img {
+    width: 62px;
+}
+
+th{text-align: center !important;}
+
+.custom-list {
+  max-height: 500px; /* Set the maximum height for the list */
+  overflow-y: auto; /* Add vertical scrollbar when needed */
+  border: 1px solid #ccc; /* Add a border to the list */
+  border-radius: 4px; /* Add rounded corners */
+}
+
+.custom-list .list-group-item {
+  cursor: pointer; /* Change cursor to pointer on hover */
+}
+.center-container-home {
+  justify-content: center;
+  text-align: center;
+
+}
+.submitpublicpage{
+  justify-content: center;
+  text-align: center;
+
+}
+
+.custom-list .list-group-item:hover {
+  background-color: #3b42c4!important;
+  color: white; /* Change background color on hover */
+}
+
+.custom-list .active {
+  background-color: #3b42c4!important;
+  color: white; /* Add a background color to the active item */
+}
 
   
+.custom-table {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 100%; /* Optionally limit the table width */
+}
+
+/* Style table header (thead) */
+.custom-table thead {
+  background-color: #f5f5f5;
+}
+
+/* Style table rows based on sender (bot or visitor) */
+.bot-message {
+  background-color: #e5f7ff; /* Customize background color for bot messages */
+}
+
+.visitor-message {
+  background-color: #f0f0f0; /* Customize background color for visitor messages */
+}
+
+.email-content-h{height: 1.5rem; padding-top: 1px;}
+.email-content-h2{height: 3rem; padding-top: 1px;}
+.top12admin{top: -12% !important;}
+.message-text{color: red;}
+.search-icon-topbar {
+  position: absolute;
+  top: 20%;
+  left: 0px;
+  left: 9px;
+  opacity: 0.8;
+}
+
+.modal-backdrop.show{background-color: #0000004d !important; }
+.active>.page-link, .page-link.active{ background-color: #3b42c4 !important;
+  color: #fff !important;
+}
+
+
+/* Apply styles to the table container */
+.table-responsive {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Style the table headers */
+.table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  text-align: left;
+
+}
+
+/* Style the table rows */
+
+
+
+.p-5.content {
+  height: 100vh;
+  overflow-y: scroll;
+}
+
+.p-5.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-scroll{
+  height: 60vh;
+  overflow-y: scroll;
+}
+
+.chat-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.text-area-heightfix{
+  height: 80px !important;
+}
+
+.navbar-expand-lg .navbar-nav .dropdown-menu{
+  left: auto !important;
+  right: 0 !important;
+}
+.loginpaddingleft{
+  padding-left: 39px;
+}
+.sptoptextarea{
+  top: -14% !important;
+}
+
+.view-more-link,
+.view-less-link {
+  text-decoration: none;
+  cursor: pointer;
+  color: #3b42c4; /* Link color */
+  font-weight: bold;
+  transition: color 0.3s, border-bottom 0.3s;
+  display: inline-block;
+}
+
+.view-more-link::after,
+.view-less-link::after {
+ 
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  vertical-align: bottom;
+  transition: width 0.3s;
+}
+
+.view-more-link:hover,
+.view-less-link:hover {
+  color: #3b42c4; /* Hover color */
+}
+
+.view-more-link.active::after,
+.view-less-link.active::after {
+  width: 1em; /* Adjust as needed for your design */
+}
+
+.custom-close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 50px;
+  cursor: pointer;
+  color: #333; /* Color of the close button */
+  padding: 0;
+}
+
+.custom-close-button:hover {
+  color: #ff0000; /* Color when hovering over the close button */
+}
+
+.padding-namedate.d-flex.justify-content-between.highlighted-item {
+  color: black!important;
+  
+}
+.padding-namedate.d-flex.justify-content-between.highlighted-item .name-date-conversation h6{
+  color: black!important;
+  font-weight: 700;
+
+}
+ 
+.padding-namedate.d-flex.justify-content-between.highlighted-item .date-conversation p{
+  color: black!important;
+}
+
+.loader-book{
+
+margin-top: 200px;
+text-align: center;
+font-size: medium;
+}

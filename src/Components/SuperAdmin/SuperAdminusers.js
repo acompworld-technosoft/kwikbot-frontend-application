@@ -1,25 +1,25 @@
 import React, { useState } from "react";
-import { Container, Row, Col } from "react-bootstrap";
-//importing form
+import { Row, Col } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FormControl from "react-bootstrap/FormControl";
 import SideBarAdmin from "./side-bar";
 import WizardModal from "./modal/addClientModel";
-import Modal from "react-bootstrap/Modal";
+import TransactionModal from "./modal/TransactionModal";
 import {
   getAllUser,
-  getAllTransaction,
-  getUserById,
+  getAllTransactionUser,
+  getContent,
+  getSingleClientData,
 } from "../../Services/SuperAdmin/apiCall";
 import { useEffect } from "react";
 import Navbar from "./topNavbar";
-import { toast } from "react-toastify";
 import ClientEditModel from "./modal/clientEditModel";
-import Pagination from "react-bootstrap/Pagination";
 import moment from "moment";
+import PaginationComponent from "./PaginationComponent";
 
 const KwikbotPdminPanel = () => {
+  const navigate = useNavigate();
   // Step 2: Set Up Initial State
   const [activeButton, setActiveButton] = useState(null);
 
@@ -46,6 +46,7 @@ const KwikbotPdminPanel = () => {
   const UserDataCall = async () => {
     try {
       const response = await getAllUser();
+      if (!response.data) return console.log("No data found");
       const filteredData = response.data.filter((user) => {
         if (activeFilter === "active") {
           return user.isActive; // Assuming there's an 'isActive' property in the user data
@@ -56,7 +57,6 @@ const KwikbotPdminPanel = () => {
       });
 
       setAllUserData(filteredData);
-      console.log("response", filteredData);
     } catch (error) {
       console.log(error.response.data.message);
     }
@@ -78,29 +78,30 @@ const KwikbotPdminPanel = () => {
     return orgNameMatch || mobileMatch || emailMatch;
   });
 
-  console.log("allUserData", allUserData);
-
   //------------ handle view all transaction of the client----------------
 
   const [transactionData, setTransactionData] = useState([]);
   const [organisationname, setOrganisationname] = useState("");
-
   const handleViewTransaction = async (clientId, organisationname) => {
     try {
       setOrganisationname(organisationname);
       handleShow();
-      const response = await getAllTransaction({ clientId });
-
-      // Set transactionData to the array of payments from the response
-      setTransactionData(response.data[0]?.payments || []);
+      const response = await getAllTransactionUser({ clientId });
+      if (response && response.data && response.data.payments) {
+        // Check if payments exist and set the transaction data
+        setTransactionData(response.data.payments);
+      } else {
+        setTransactionData([{ paymentId: "No transaction data available." }]);
+      }
     } catch (error) {
-      toast.error("Server error: " + error.response.data.message);
+      console.log(error);
     }
   };
+  const noUserFound = filteredByOrgNameAndMobile.length === 0;
 
   ///=================pagination===================//
   // Step 1: Set Up Initial State
-  const itemPerPage = 6; // Number of items per page
+  const itemPerPage = 10; // Number of items per page
   const [currentPage, setCurrentPage] = useState(1); // Current page
   const totalItems = filteredByOrgNameAndMobile.length; // Total items in your data
   const totalPages = Math.ceil(totalItems / itemPerPage); // Calculate total pages
@@ -119,39 +120,63 @@ const KwikbotPdminPanel = () => {
 
   ///================== handle edit click ===================//
 
-  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [clientId1, setClientId] = useState(null);
+  const [editclientdata, setEditClientData] = useState({});
+  const [userId, setUserId] = useState(null);
 
-  const handleEditClick = (userId) => {
-    setSelectedUserId(userId);
-    setModalShow2(true);
-  };
-
-  //=============== handle download the file ================//
-
-  ///----------- data is downloading in csv formatb fuction ----------------------
-
-  function downloadObjectAsJson(jsonData, filename) {
-    const json = JSON.stringify(jsonData, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-
-    URL.revokeObjectURL(url);
-  }
-  const handleDownloadData = async (userId) => {
+  const handleEditClick = async (userId, clientId) => {
     try {
-      const response = await getUserById({ userid: userId });
-      console.log("response", response);
-      const data = response.data;
-      downloadObjectAsJson(data, "user.json");
+      const res = await getSingleClientData({ clientId: userId });
+      if (res.success === true) {
+        setEditClientData(res.data);
+        setClientId(clientId);
+        setModalShow2(true);
+        setUserId(userId);
+      }
     } catch (error) {
       console.log(error);
     }
   };
+
+  ///------------ handle conversation click ----------------------//
+
+  const handleConversatonClick = async (userId, organizationName) => {
+    //send user id to the conversation page
+    navigate("/superadmin/customerconversation", {
+      state: { userId, organizationName },
+    });
+  };
+  function downloadObjectAsTxt(data, filename) {
+    const text = data.map(item => `${item.title}\n${item.description}`).join('\n\n');
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+  
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+  
+    URL.revokeObjectURL(url);
+  }
+  
+  const handleDownloadData = async (userId) => {
+    try {
+      // Assuming getContent(userId) fetches data correctly.
+      const response = await getContent(userId);
+      const data = response.data.data;
+      downloadObjectAsTxt(data, "content-history.txt");
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+  
+  
+
+  const handleModalHide = () => {
+    setModalShow2(false); // Close the modal
+    UserDataCall(); // Call your function after closing the modal
+  };
+
   return (
     <div>
       <Navbar />
@@ -166,7 +191,7 @@ const KwikbotPdminPanel = () => {
           <Col xs={12} className="pt-5">
             <Row>
               <Col xs={9}>
-                <h2>User management </h2>
+                <h2>User Management </h2>
               </Col>
               <Col xs={3}>
                 <ul className="active-inactive">
@@ -193,18 +218,23 @@ const KwikbotPdminPanel = () => {
             <Row>
               <Col xs={4}>
                 <Form inline>
-                  <FormControl
-                    type="text"
-                    placeholder="Search"
-                    className="mr-sm-2"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                  />
+                  <div className="position-relative">
+                    <FormControl
+                      type="text"
+                      placeholder="Organization Name/ Contact Number/ Email"
+                      className="mr-sm-2 px-5"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                    />
+                    <div className="search-icon-topbar">
+                      <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                  </div>
                 </Form>
               </Col>
 
-              <Col>
-                <div className="text-right pr-3">
+              <Col xs={8}>
+                <div className="text-right pe-3 me-1">
                   <Link
                     to=""
                     className="add-user"
@@ -223,144 +253,133 @@ const KwikbotPdminPanel = () => {
 
             <Row>
               <div className="table-res mt-5">
-                <table className="table table-bordered table-striped">
+                <table className="table table-bordered table-striped table-responsive ">
                   <thead>
                     <tr>
-                      <th scope="col">Company Name</th>
+                      <th scope="col">Organization Name</th>
                       <th scope="col">Contact Number</th>
                       <th scope="col">Email ID</th>
                       <th scope="col">Country</th>
                       <th scope="col">Plan</th>
-                      <th scope="col">Status</th>
                       <th scope="col">Registration Date</th>
                       <th scope="col">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {currentItems &&
-                      currentItems.map((user) => (
-                        <tr>
-                          <td>{user.organizationName}</td>
-                          <td>{user.matchedUsers[0]?.phone}</td>
-                          <td>{user.matchedUsers[0]?.email}</td>
-                          <td>{user.matchedUsers[0]?.country}</td>
-                          <td>{user.subscriptionPlans[0]?.planName}</td>
-                          <td>
-                            {user?.isActive === true ? "Active" : "Inactive"}
-                          </td>
-                          <td>
-                           
-                            {moment(user.createdAt).format("DD-MM-YYYY")}
-                          </td>
-                          <td>
-                            <Link
-                              to=""
-                              className="edit"
-                              onClick={() =>
-                                handleDownloadData(user.matchedUsers[0]?._id)
-                              }
-                            >
-                              <i class="fa-solid fa-download"></i>
-                            </Link>
-                            <Link
-                              to=""
-                              className="edit"
-                              onClick={() =>
-                                handleViewTransaction(
-                                  user._id,
-                                  user.organizationName
-                                )
-                              }
-                            >
-                              <i class="fa-solid fa-circle-dollar-to-slot"></i>
-                            </Link>
-                            <Link
-                              to="/superadmin/customerconversation"
-                              className="edit"
-                            >
-                              <i class="fa-solid fa-comment-dots"></i>
-                            </Link>
+                    {noUserFound ? (
+                      <tr>
+                        <td colSpan="9">No user found.</td>
+                      </tr>
+                    ) : (
+                      <>
+                        {currentItems &&
+                          currentItems.map((user) => (
+                            <tr>
+                              <td>{user.organizationName}</td>
+                              <td>{user.matchedUsers[0]?.phone}</td>
+                              <td>{user.matchedUsers[0]?.email}</td>
+                              <td>{user.matchedUsers[0]?.country}</td>
+                              <td>
+                                <i class="fa fa-dollar"></i>{" "}
+                                {
+                                  user.subscriptionPlans[
+                                    user.subscriptionPlans.length - 1
+                                  ]?.amount
+                                }{" "}
+                                /{" "}
+                                {
+                                  user.subscriptionPlans[
+                                    user.subscriptionPlans.length - 1
+                                  ]?.frequency
+                                }
+                              </td>
+                              <td>
+                                {moment(user.createdAt).format("DD-MM-YYYY")}
+                              </td>
+                              <td>
+                                <Link
+                                  to=""
+                                  className="edit"
+                                  onClick={() =>
+                                    handleDownloadData(
+                                      user.matchedUsers[0]?._id
+                                    )
+                                  }
+                                >
+                                  <i class="fa-solid fa-download"></i>
+                                </Link>
+                                <Link
+                                  to=""
+                                  className="edit"
+                                  onClick={() =>
+                                    handleViewTransaction(
+                                      user._id,
+                                      user.organizationName
+                                    )
+                                  }
+                                >
+                                  <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                                </Link>
 
-                            <Link
-                              className="edit"
-                              onClick={() =>
-                                handleEditClick(user.matchedUsers[0]?._id)
-                              }
-                            >
-                              <i class="fa-regular fa-pen-to-square"></i>
-                            </Link>
-                            {modalShow2 && (
-                              <ClientEditModel
-                                show={modalShow2}
-                                onHide={() => setModalShow2(false)}
-                                userId={user._id}
-                              />
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                                <a className="edit">
+                                  <i
+                                    onClick={() =>
+                                      handleConversatonClick(
+                                        user._id,
+                                        user.organizationName
+                                      )
+                                    }
+                                    className="fa-solid fa-comment-dots"
+                                  ></i>
+                                </a>
+
+                                <Link
+                                  className="edit"
+                                  onClick={() =>
+                                    handleEditClick(
+                                      user._id,
+                                      user.matchedUsers[0]?._id
+                                    )
+                                  }
+                                >
+                                  <i class="fa-regular fa-pen-to-square"></i>
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                      </>
+                    )}
+
+                    {modalShow2 && (
+                      <ClientEditModel
+                        show2={modalShow2}
+                        onHide2={handleModalHide}
+                        editclientdata={editclientdata}
+                        clientId1={clientId1}
+                        userId={userId}
+                      />
+                    )}
                   </tbody>
                 </table>
-                <div>
-                  <div className="pagination-container">
-                    <Pagination className="justify-content-center">
-                      <Pagination.Prev
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                      />
-                      {Array.from({ length: totalPages }, (_, index) => (
-                        <Pagination.Item
-                          key={index + 1}
-                          active={index + 1 === currentPage}
-                          onClick={() => handlePageChange(index + 1)}
-                        >
-                          {index + 1}
-                        </Pagination.Item>
-                      ))}
-                      <Pagination.Next
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                      />
-                    </Pagination>
-                  </div>
-                </div>
+                <PaginationComponent
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             </Row>
           </Col>
         </div>
       </div>
 
-      <Modal show={show} onHide={handleClose} animation={true} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>{organisationname}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <table class="table table-striped table-bordered">
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Transaction ID</th>
-                <th scope="col">Amount</th>
-                <th scope="col">Free Type</th>
-                <th scope="col">Status</th>
-                <th scope="col">Method</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactionData.map((payment, index) => (
-                <tr key={index}>
-                  <td>{payment.paymentDate}</td>
-                  <td>{payment.paymentId}</td>
-                  <td>{payment.amount}</td>
-                  <td>{payment.paymentMethod}</td>
-                  <td>{payment.paymentStatus}</td>
-                  <td>{payment.paymentMethod}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Modal.Body>
-      </Modal>
+
+      <TransactionModal
+        show={show}
+        onHide={handleClose}
+        organisationname={organisationname}
+        transactionData={transactionData}
+      />
+
     </div>
   );
 };

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Container, Row, Col } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
-import { userRegister } from '../../../Services/SuperAdmin/apiCall';
+import { userRegister } from "../../../Services/SuperAdmin/apiCall";
 import { handleValidation } from "./validation";
 import { toast } from "react-toastify";
-
-const steps = ["Step 1: Add User", "Step 2: "];
+const steps = [" Add User", "Create Plan"];
 
 const WizardModal = ({ show, onHide, data }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -37,7 +36,8 @@ const WizardModal = ({ show, onHide, data }) => {
   const [subscriptionPlan, setSubscriptionPlan] = useState({
     frequency: "",
     amount: "",
-    setUpAmount: "",
+    setUpAmount: 0,
+    isSetUpAmountApplicable: true,
     planName: "Basic Plan",
     currency: "USD",
     applicableTaxPercentage: 0,
@@ -54,6 +54,7 @@ const WizardModal = ({ show, onHide, data }) => {
 
   /// ---- Add User form handle ------------------
   const [errorMessage, setErrorMessage] = useState({});
+  const [isSetUpFeeWaived, setIsSetUpFeeWaived] = useState(false);
   const [formData, setFormData] = useState({
     user: {
       firstName: "",
@@ -69,17 +70,28 @@ const WizardModal = ({ show, onHide, data }) => {
       industry: "",
       subscriptionPlans: [subscriptionPlan],
       contents: [],
+      botCode: "",
+      websiteUrl: "",
     },
   });
+
 
   ///---- Add User form handle  input change function ------------------
 
   const handleSubscriptionChanges = (e) => {
     const { name, value } = e.target;
-    setSubscriptionPlan((prevPlan) => ({
-      ...prevPlan,
-      [name]: value,
-    }));
+
+    if (name === "setUpAmount" && isSetUpFeeWaived) {
+      setSubscriptionPlan((prevPlan) => ({
+        ...prevPlan,
+        [name]: "0", // Set the value explicitly to "0"
+      }));
+    } else {
+      setSubscriptionPlan((prevPlan) => ({
+        ...prevPlan,
+        [name]: value,
+      }));
+    }
   };
 
   useEffect(() => {
@@ -115,6 +127,14 @@ const WizardModal = ({ show, onHide, data }) => {
     });
   };
 
+  // ===================== check box =====================//
+  const handleCheckboxChange = (event) => {
+    setIsSetUpFeeWaived(event.target.checked);
+    setSubscriptionPlan((prevPlan) => ({
+      ...prevPlan,
+      isSetUpAmountApplicable: !event.target.checked, // Invert the value
+    }));
+  };
   //---- Add User form handle  submit  ------------------
 
   const handleSubmit = async (e) => {
@@ -122,15 +142,23 @@ const WizardModal = ({ show, onHide, data }) => {
     try {
       console.log("formdata on submit ", formData);
       const errors = {};
+      
       if (!formData.client.subscriptionPlans[0].setUpAmount) {
-        errors.setUpAmount = " SetUpAmount is required";
+        errors.setUpAmount = " setUpAmount is required";
+      }else if (formData.client.subscriptionPlans[0].setUpAmount <= 0) {
+        errors.amount = "setUpAmount should be greater than 0";
       }
+
       if (!formData.client.subscriptionPlans[0].amount) {
         errors.amount = "Amount is required";
+      }else if (formData.client.subscriptionPlans[0].amount <= 0) {
+        errors.amount = "Amount should be greater than 0";
       }
+
       if (!formData.client.subscriptionPlans[0].frequency) {
-        errors.frequency = "Frequency is required";
+        errors.frequency = "Time Period is required";
       }
+     
       setErrorMessage(errors);
 
       if (Object.keys(errors).length === 0) {
@@ -147,14 +175,18 @@ const WizardModal = ({ show, onHide, data }) => {
               country: "",
               email: "",
               phone: "",
+              userType: "ClientUser",
               password: "",
             },
             client: {
               organizationName: "",
               industry: "",
               subscriptionPlans: [subscriptionPlan],
+              botCode: "",  
+              websiteUrl: "",
             },
           });
+
           setSubscriptionPlan({
             frequency: "",
             amount: "",
@@ -187,34 +219,78 @@ const WizardModal = ({ show, onHide, data }) => {
     }));
   };
 
+  ///===================== handle modal close =====================//
+  const handleClose = () => {
+    setFormData({
+      user: {
+        firstName: "",
+        lastName: "",
+        country: "",
+        email: "",
+        phone: "",
+        userType: "ClientUser",
+        password: "",
+      },
+      client: {
+        organizationName: "",
+        industry: "",
+        subscriptionPlans: [subscriptionPlan],
+        botCode: "",
+        websiteUrl: "",
+      },
+    });
+    setSubscriptionPlan({
+      frequency: "",
+      amount: "",
+      setUpAmount: "",
+    });
+    setErrorMessage({});
+    setCurrentStep(0);
+    onHide();
+  }
+
   return (
-    <Modal show={show} onHide={onHide} size="lg" centered>
+    <Modal
+      key={"AddShow"}
+      show={show}
+      onHide={handleClose}
+      animation={true}
+      size="lg"
+      centered
+    >
       <Modal.Header closeButton>
+        <button className="custom-close-button" onClick={handleClose}>
+          &times;
+        </button>
         <Modal.Title>
-          <div className="progressBar">
-            {steps.map((step, index) => (
-              <div className="progressBarStep" key={index}>
-                <div
-                  className={`stepCircle ${
-                    index < currentStep ? "active" : ""
-                  }`}
-                >
-                  {index + 1}
+          <div className="modelhead">
+            <div className="progressBar">
+              {steps.map((step, index) => (
+                <div className="progressBarStep" key={index}>
+                  <div
+                    className={`stepCircle ${
+                      index < currentStep ? "active" : ""
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                  <div className="setpmodel">{step}</div>
+                  {index < currentStep && index < steps.length - 1 && (
+                    <div className="progressBarFill" />
+                  )}
                 </div>
-                {index < currentStep && index < steps.length - 1 && (
-                  <div className="progressBarFill" />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {currentStep === 0 && (
           <div>
-            <Row className="mt-4 mb-4">
+            <Row className="mt-4">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">First Name </label>
                   <input
                     type="text"
                     placeholder=""
@@ -226,15 +302,18 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="firstName"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">First Name </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.firstName}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.firstName}
+                    </span>
+                  </div>
                 </div>
               </Col>
 
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Last Name </label>
                   <input
                     type="text"
                     placeholder=""
@@ -246,17 +325,20 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="lastName"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Last Name </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.lastName}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.lastName}
+                    </span>
+                  </div>
                 </div>
               </Col>
             </Row>
 
-            <Row className="mb-4">
+            <Row className="">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Email ID</label>
                   <input
                     type="text"
                     placeholder=""
@@ -268,18 +350,21 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="email"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Email ID</label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.email}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.email}
+                    </span>
+                  </div>
                 </div>
               </Col>
 
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Phone No </label>
                   <input
-                    type="text"
-                    placeholder=""
+                    type="tel"
+                  
                     className="input-model"
                     onChange={(event) =>
                       handleInputChange(event, "user", "phone")
@@ -288,17 +373,20 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="phone"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Phone No </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.phone}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.phone}
+                    </span>
+                  </div>
                 </div>
               </Col>
             </Row>
 
-            <Row className="mb-4">
+            <Row className="">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Organization name </label>
                   <input
                     type="text"
                     placeholder=""
@@ -310,15 +398,18 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="organizationName"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Organization name </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.organizationName}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.organizationName}
+                    </span>
+                  </div>
                 </div>
               </Col>
 
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Industry </label>
                   <input
                     type="text"
                     placeholder=""
@@ -330,20 +421,23 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="industry"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Industry </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.industry}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.industry}
+                    </span>
+                  </div>
                 </div>
               </Col>
+          
             </Row>
 
-            <Row className="mb-4">
+            <Row className="">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Choose Password </label>
                   <input
-                    type="text"
-                    placeholder=""
+                    type="password"
                     className="input-model"
                     onChange={(event) =>
                       handleInputChange(event, "user", "password")
@@ -352,17 +446,20 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="password"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Choose Password </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.password}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.password}
+                    </span>
+                  </div>
                 </div>
               </Col>
 
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Rewrite Password </label>
                   <input
-                    type="text"
+                    type="password"
                     placeholder=""
                     className="input-model"
                     onChange={(event) =>
@@ -372,17 +469,20 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="passwordrewrite"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Rewrite Password </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.passwordrewrite}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.passwordrewrite}
+                    </span>
+                  </div>
                 </div>
               </Col>
-            </Row>
+            </Row> 
 
-            <Row className="mb-4">
+            <Row className="">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Country </label>
                   <input
                     type="text"
                     placeholder=""
@@ -394,15 +494,18 @@ const WizardModal = ({ show, onHide, data }) => {
                     name="country"
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Country </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.country}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.country}
+                    </span>
+                  </div>
                 </div>
               </Col>
 
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Bot Client ID </label>
                   <input
                     type="text"
                     placeholder=""
@@ -412,19 +515,20 @@ const WizardModal = ({ show, onHide, data }) => {
                     }
                     value={formData.client.botCode}
                     name="botCode"
-                    onFocus={handleInputFocus}
+                    onFocus={handleInputFocus}  
                   />
-                  <label className="toplabel">Bot Client Code </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.botCode}
-                  </span>
                 </div>
-              </Col>
+                <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.botCode}
+                    </span>
+                    </div>
+                </Col>
             </Row>
-
-            <Row className="mb-4">
+            <Row className="">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Website URL </label>
                   <input
                     type="text"
                     placeholder=""
@@ -435,19 +539,17 @@ const WizardModal = ({ show, onHide, data }) => {
                     value={formData.client.websiteUrl}
                     name="websiteUrl"
                     onFocus={handleInputFocus}
+
                   />
-                  <label className="toplabel">Website URL </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.websiteUrl}
-                  </span>
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.websiteUrl}
+                    </span>
+                  </div>
                 </div>
               </Col>
-
-              <Col xs={6}>
-
-              </Col>
-
             </Row>
+
           </div>
         )}
 
@@ -456,28 +558,34 @@ const WizardModal = ({ show, onHide, data }) => {
             <Row className="mt-4 mb-4">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Set Up Fee </label>
                   <input
-                    type="text"
+                    type="number"
                     placeholder=""
                     className="input-model"
                     value={formData.client.subscriptionPlans[0].setUpAmount}
                     onChange={(event) => handleSubscriptionChanges(event)}
                     name="setUpAmount"
                     onFocus={handleInputFocus}
+                    disabled={isSetUpFeeWaived}
                   />
-                  <label className="toplabel">Set Up Free </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.setUpAmount}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.setUpAmount}
+                    </span>
+                  </div>
 
                   <div>
                     <input
                       type="checkbox"
-                      id="huey"
-                      name="drone"
+                      id="waveSetUpFeeCheckbox"
+                      name="waveSetUpFee"
                       value="huey"
+                      onChange={handleCheckboxChange}
+                      checked={isSetUpFeeWaived}
                     />
-                    wave off set up fees for this user
+                    {" "}Waive off set up fees for this user
                   </div>
                 </div>
               </Col>
@@ -486,23 +594,27 @@ const WizardModal = ({ show, onHide, data }) => {
             <Row className="mb-4">
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Subscription Amount ($)</label>
                   <input
-                    type="text"
+                    type="number"
                     className="input-model"
                     name="amount"
                     value={formData.client.subscriptionPlans[0].amount}
                     onChange={(event) => handleSubscriptionChanges(event)}
                     onFocus={handleInputFocus}
                   />
-                  <label className="toplabel">Subscription Amount</label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.amount}
-                  </span>
+
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.amount}
+                    </span>
+                  </div>
                 </div>
               </Col>
 
               <Col xs={6}>
                 <div className="input-topposition">
+                  <label className="toplabel">Time Period </label>
                   <Form.Select
                     aria-label="Default select example"
                     className="input-model"
@@ -516,12 +628,14 @@ const WizardModal = ({ show, onHide, data }) => {
                     <option value="Yearly">Yearly</option>
                   </Form.Select>
 
-                  <label className="toplabel">Time Period </label>
-                  <span style={{ color: "red", textAlign: "center" }}>
-                    {errorMessage.frequency}
-                  </span>
+                  <div className="email-content-h ">
+                    <span style={{ color: "red", textAlign: "center" }}>
+                      {errorMessage.frequency}
+                    </span>
+                  </div>
                 </div>
               </Col>
+
             </Row>
           </div>
         )}
@@ -534,7 +648,7 @@ const WizardModal = ({ show, onHide, data }) => {
         )}
         {currentStep < steps.length - 1 && (
           <Button variant="primary" onClick={handleNext}>
-            Next
+            Save & Next
           </Button>
         )}
         {currentStep === steps.length - 1 && (

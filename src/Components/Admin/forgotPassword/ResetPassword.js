@@ -1,11 +1,7 @@
 import React, { useState } from "react";
-import Header from "../header";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import {
-  resetpassword,
-  verifyotp,
-} from "../../../Services/Admin/forgotPasswordapi";
+import { resetpassword} from "../../../Services/Admin/forgotPasswordapi";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import { Input } from "antd";
 

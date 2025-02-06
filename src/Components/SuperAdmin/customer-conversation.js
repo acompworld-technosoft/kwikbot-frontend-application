@@ -1,229 +1,328 @@
-import React, { useState } from 'react';
-import {Navbar, Nav, Form} from 'react-bootstrap';
-import {Row, Col } from 'react-bootstrap';
-import Modal from 'react-bootstrap/Modal';
-import SideBarAdmin from './side-bar';
-const CustomerConversation = ({onSearch }) => {
+import { useState, useEffect } from "react";
+import SideBarAdmin from "./side-bar";
+import Navbar from "./topNavbar";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getConversationData } from "../../Services/SuperAdmin/apiCall";
+import {
+  TabContainer,
+  ListGroup,
+  Tab,
+  Row,
+  Col,
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const handleInputChange = (event) => {
-    setSearchTerm(event.target.value);
+} from "react-bootstrap";
+import moment from "moment";
+
+const CustomerConversation = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const stateData = location.state || {};
+  const { userId, organizationName } = stateData;
+  const [searchTerm, setSearchTerm] = useState("");
+  ///============= conversation data   =========//
+  const [conversationData, setConversationData] = useState([]);
+  const [visitorConversation, setVisitorConversation] = useState([]);
+  const [visitorId, setVisitorId] = useState("");
+  const [conversationDate, setConversationDate] = useState("");
+  const[downloadData,setDownloadData]=useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+
+  useEffect(() => {
+    handleConversationData();
+  }, []);
+
+  const handleConversationData = async () => {
+    try {
+      const response = await getConversationData(userId);
+      setConversationData(response.data);
+
+      if (response.data.length > 0) {
+        const parsedData = JSON.parse(response.data[0].conversation);
+        setDownloadData(parsedData)
+        const messages = parsedData.transcript
+          .split(/\s*(user|bot):/)
+          .filter(
+            (message) =>
+              message.replace("user", "").replace("bot", "").trim() !== ""
+          )
+          .map((message) => message.trim());
+        setVisitorConversation(messages);
+        setVisitorId(response.data[0].visitorId);
+        setSelectedConversation(response.data[0]._id);
+        setConversationDate(response.data[0].createdAt);
+      } else if (response.data.length === 0) {
+        setVisitorConversation([]);
+        setVisitorId("");
+        setConversationDate("");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  ////============= conversation throught id   =========//
+  
+  const handleShowConversation = async (id, visId, date) => {
+    setVisitorId(visId);
+    setConversationDate(date);
+    setSelectedConversation(id);
+    try {
+      const response = conversationData.filter((item) => item._id === id);
+
+      if (response.length > 0) {
+        const parsedData = JSON.parse(response[0].conversation);
+        setDownloadData(parsedData)
+        const messages = parsedData.transcript
+          .split(/\s*(user|bot):/)
+          .filter(
+            (message) =>
+              message.replace("user", "").replace("bot", "").trim() !== ""
+          )
+          .map((message) => message.trim());
+        setVisitorConversation(messages);
+      } else {
+        console.log("No matching conversation found.");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //////========= search by id  =========/////
+  const filteredData = conversationData.filter((item) => {
+    return item.visitorId.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  /// ========= search by date =========/////
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+  };
+
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value);
   };
 
   const handleSearch = () => {
-    onSearch(searchTerm);
+    const isoStartDate = moment(startDate).format("YYYY-MM-DD");
+    const isoEndDate = moment(endDate).format("YYYY-MM-DD");
+
+    const filteredData = conversationData.filter((item) => {
+      if (!isoStartDate || !isoEndDate) return true;
+      const itemDate = moment(item.paymentDate).format("YYYY-MM-DD");
+      return itemDate >= isoStartDate && itemDate <= isoEndDate;
+    });
+    setConversationData(filteredData);
   };
-  const [show, setShow] = useState(false);
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  ///----------------- download conversation ------------------///
   
-  const [isActive, setIsActive] = useState(false);
+  function downloadObjectAsJson(jsonData, filename) {
+    const json = JSON.stringify(jsonData, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
-  const handleClick = () => {
-    setIsActive(true);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  const handleConversationDownload = () => {
+    try {
+      
+      downloadObjectAsJson(downloadData, "coonversation.json");
+    } catch (error) {
+      console.log("error", error);
+    }
   };
+
+
   return (
-
-    
     <div>
-            <header>
-           <Navbar  expand="lg" className='px-5 bg-blue'>
-            <Navbar.Brand href="#home">Kwiwkbot</Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-                <Nav className="mr-auto">
+      <section className="">
+        <Navbar />
+
+        <div fluid className="admin-panel">
+          <SideBarAdmin />
+
+          <div className="p-5" style={{width:"100%"}}>
+            <div>
+              <h2>
+                <i
+                  class="fa-solid fa-angle-left "
+                  onClick={() => navigate(-1)}
+                ></i>{" "}
+                {""}
+                {organizationName} - Customer Conversation
+              </h2>
+            </div>
+
+           <Col xs={12}>
+           <Row>
+              <Col xs={6} className="pt-5">
+                <div className="search-bar-container">
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="search Conversation by conversation ID"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 
-                
-                </Nav>
-                <Form inline>
-                 <Nav className='align-items-center'>
-                        <Nav.Link href="#home">Rishabh Jain <br/> Admin</Nav.Link>
-                        <Nav.Link href="#link"> <img src="/images/superadminimages/avter.jpg"  className='avter-img' /> </Nav.Link>
-                 </Nav>
-                </Form>
-            </Navbar.Collapse>
-            </Navbar>
-      </header>
-
-
-  <section className=''>
-
-
-
-      <div fluid className='admin-panel'>
-      
-         <SideBarAdmin/>
-                <div className={`right-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-                  
-                  <div>
-                   <h2><i class="fa-solid fa-angle-left"></i> Stone Bridge - Customer Conversation</h2>  
-                  </div>
-
-                    <Row>
-                       <Col xs={6} className='pt-5'>
-                       <div className="search-bar-container">
-                          <input
-                            type="text"
-                            className="search-input"
-                            placeholder="search Conversation by name and conversation ID"
-                            value={searchTerm}
-                            onChange={handleInputChange}
-                          />
-                          <button className="search-button" onClick={handleSearch}>
-                            Search
-                          </button>
-                       </div>  
-                      </Col>
-                      <Col xs={6} className='pt-5'>
-                        <div className='d-flex justify-content-end align-items-baseline'>
-                             <p className='mr-3'>Period From</p>
-                             <input type="date" className='date-input mr-3' />
-                             <p className='mr-3'>To</p>
-                              <input type="date" className='date-input mr-3' />
-                              <button className="search-button" onClick={handleShow}>
-                                Search
-                            </button>
-                        </div>
-
-                        <Modal show={show} onHide={handleClose} animation={true}       size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Stonebridge Transaction</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-        <table class="table table-striped table-bordered">
-  <thead>
-    <tr>
-      <th scope="col">Date</th>
-      <th scope="col">Transaction ID</th>
-      <th scope="col">Amount</th>
-      <th scope="col">Free Type</th>
-      
-      <th scope="col">Status</th>
-      <th scope="col">Method</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">01-08-2023</th>
-      <td>RX0987654321</td>
-      <td>$100.00</td>
-      <td>Set up fee</td>
-      <td>Paid</td>
-      <td>Credit card</td>
-    </tr>
-    <tr>
-      <th scope="row">01-08-2023</th>
-      <td>RX0987654321</td>
-      <td>$85.00</td>
-      <td>Monthly Subscription Fee</td>
-      <td>Paid</td>
-      <td>PayPal</td>
-    </tr>
-    <tr>
-      <th scope="row">01-08-2023</th>
-      <td>RX0987654321</td>
-      <td>$100.00</td>
-      <td>Monthly Subscription Fee</td>
-      <td>Paid</td>
-      <td>Credit card</td>
-    </tr>
-    <tr>
-      <th scope="row">01-08-2023</th>
-      <td>RX0987654321</td>
-      <td>$85.00</td>
-      <td>Monthly Subscription Fee</td>
-      <td>Paid</td>
-      <td>PayPal</td>
-    </tr>
-    <tr>
-      <th scope="row"></th>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-
-        </Modal.Body>
-     
-      </Modal>
-
-                      </Col>
-                    </Row>
-                    <Row>
-
-                      <Col xs={12} className='pt-5'>
-                        <div className='border-container'>
-                                 <table class="table table-bordered">
-                                  <thead>
-                                    <tr>
-                                      <th scope="col">Alex</th>
-                                      <td>Conversation ID 0551 <span className=''>01-08-2023 11:00 AM</span></td>
-                                   
-                                    
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                  <tr>
-                                      <th scope="row">vistior</th>
-                                      <td ><span className='circle-dummy'><i class="fa-solid fa-a"></i></span>Hello</td>
-                                    </tr>
-                                    <tr>
-                                      <th scope="row">vistior</th>
-                                      <td><span className='circle-dummy'><i class="fa-solid fa-robot"></i></span>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy textever since the 1500s</td>
-                                    </tr>
-                                    <tr>
-
-                                  <th scope="row">vistior</th>
-                                          <td><span className='circle-dummy'><i class="fa-solid fa-a"></i></span>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy textever since the 1500s</td>
-                                  </tr>
-                                  <tr>
-                                  <th scope="row">vistior</th>
-                                          <td><span className='circle-dummy'><i class="fa-solid fa-robot"></i></span>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy textever since the 1500s</td>
-                                  </tr>
-
-                                  <tr>
-                                  <th scope="row">vistior</th>
-                                          <td><span className='circle-dummy'><i class="fa-solid fa-a"></i></span>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy textever since the 1500s</td>
-                                  </tr>
-
-
-                                  <tr>
-                                  <th scope="row">vistior</th>
-                                          <td><span className='circle-dummy'><i class="fa-solid fa-robot"></i></span>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy textever since the 1500s</td>
-                                  </tr>
-
-
-
-
-
-                                      </tbody>
-                                      </table>
-                                      <div>
-                         
-                          </div>
-
-                          </div>
-                       </Col>
-                    </Row>
                 </div>
+              </Col>
+              <Col xs={6} className="pt-5">
+                <div className="d-flex justify-content-end align-items-baseline">
+                  <p className="me-3">Period From</p>
+                  <input
+                    type="date"
+                    className="date-input me-3"
+                    value={startDate}
+                    onChange={handleStartDateChange}
+                  />
+                  <p className="me-3">To</p>
+                  <input
+                    type="date"
+                    className="date-input me-3"
+                    value={endDate}
+                    onChange={handleEndDateChange}
+                  />
+                  <button className="search-button" onClick={handleSearch}>
+                    Search
+                  </button>
+                </div>
+              
                 
-        
-         </div>
-   </section>
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={12} className="pt-5">
+                {visitorId ? (
+                  <div className="border-container">
+                    <TabContainer
+                      id="left-tabs-example"
+                      defaultActiveKey="home"
+                    >
+                      <Row>
+                        <Col sm={3}>
+                          <ListGroup className="custom-list">
+                            <ListGroup.Item disabled >Conversation ID</ListGroup.Item>
 
+                            {filteredData.map((item) => (
+                              <ListGroup.Item
+                                action
+                                onClick={() =>
+                                  handleShowConversation(
+                                    item._id,
+                                    item.visitorId,
+                                    item.createdAt
+                                  )
+                                }
+                                key={item._id}
+                                className={item._id === selectedConversation ? "active" : ""}
+                                
+                              >
+                                {item.visitorId}
+                              </ListGroup.Item>
+                            ))}
+                          </ListGroup>
+                        </Col>
+                        <Col sm={9}>
+                          <Tab.Content>
+                          <table className="custom-table table table-bordered table-responsive">
+                          <thead>
+                                  <tr>
+                                    <th scope="col"></th>
+                                    <td style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                                        <p> <span>  Conversation ID {visitorId}{" "}</span>
+                                      <span className="">
+                                        {moment(conversationDate).format(
+                                          "DD-MM-YYYY"
+                                        )}
+                                        ,{" "}
+                                        {moment(conversationDate).format(
+                                          "h:mm A"
+                                        )}
+                                      </span></p>
+                                      <div  style={{
+                     
+                      color:"#3B42C4",
+                      fontSize:"30px"
+                }}>
+                <i class="fa fa-download" onClick={handleConversationDownload}></i></div>
+                                    </td>
+                                  </tr>
+                                </thead>
+                          </table>
+                            <Tab.Pane eventKey="home" className="chat-scroll">
+                              <table className="custom-table table table-bordered table-responsive">
+                              
+                                <tbody>
+                                  {visitorConversation.map((message, index) => {
+                                    const isBot = index % 2 === 1;
+                                    return (
+                                      <tr
+                                        key={index}
+                                        className={
+                                          isBot
+                                            ? "bot-message"
+                                            : "visitor-message"
+                                        }
+                                      >
+                                        <th scope="row">
+                                          {isBot ? "Alex" : "Visitor"}
+                                        </th>
+                                        <td>
+                                          {isBot ? (
+                                            <span className="circle-dummy">
+                                              <i className="fa-solid fa-robot"></i>
+                                            </span>
+                                          ) : (
+                                            <span className="circle-dummy">
+                                              <i className="fa-solid fa-a"></i>
+                                            </span>
+                                          )}
+                                          {message}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </Tab.Pane>
+                          </Tab.Content>
+                        </Col>
+                      </Row>
+                    </TabContainer>
+                  </div>
+                ) : (
+                  <h1
+                    style={{
+                      color: "grey",
+                      textAlign: "center",
+                      marginTop: "100px",
+                      fontSize: "30px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    No Conversation Found
+                  </h1>
+                )}
+              </Col>
+            </Row>
 
+           </Col>
+          </div>
+        </div>
+      </section>
     </div>
-  )
-}
+  );
+};
 
-export default CustomerConversation
+export default CustomerConversation;

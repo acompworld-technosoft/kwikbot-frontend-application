@@ -123,7 +123,7 @@ const ForgetPassword = () => {
               <div className="col-lg-6">
                 <div className="loging-card">
                   <div class="heading-profile" style={{ marginRight: "150px" }}>
-                    <h1>Forgot Password</h1>
+                    <h1>Forgot Password ?</h1>
                   </div>
 
                   <form className="text-center">

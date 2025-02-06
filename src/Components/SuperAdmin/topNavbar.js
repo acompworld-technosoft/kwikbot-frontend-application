@@ -1,51 +1,51 @@
-import React, { useEffect ,useState} from 'react';
-import { Navbar, Nav, Form } from 'react-bootstrap';
-import { getUserById } from '../../Services/SuperAdmin/apiCall';  
+import React from 'react';
+import { Navbar, Nav, Form,Dropdown } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+
 
 const TopNavbar = () => {
-  
-  const userId = JSON.parse(localStorage.getItem('user'));
-  const [user, setUser] = useState({
-    firstName: '',
-    lastName: '',
-    userType: ''
-  });
-
-  const userData = async() => {
-    const response = await getUserById({ userid: userId._id });
-    console.log(response);
-    const userData = response.data;
-      setUser({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        userType: userData.userType
-      });
+ 
+  const userData = JSON.parse(localStorage.getItem('user'));
+  if(!userData){
+    window.location.href = "/superadmin/login";
   }
-   
-  useEffect(() => {
-    userData();
-  }, [])
+ 
+  
+  ///=================Logout===================///
+  const handleLogout = () => {
+    localStorage.removeItem("kwikbot-superadmin-token");
+    window.location.href = "/superadmin/login";
+    
+  };
+
   
   return (
     <div>
-        <header>
+       
       <Navbar  expand="lg" className='px-5 bg-blue'>
-            <Navbar.Brand href="#home">Kwiwkbot</Navbar.Brand>
+      <Link to="/" >
+            <Navbar.Brand className='text-white'>Kwikbot</Navbar.Brand>
+            </Link>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-                <Nav className="mr-auto">
+            <Navbar.Collapse id="basic-navbar-nav" className='justify-content-end'>
                 
-                
-                </Nav>
                 <Form inline>
-                 <Nav className='align-items-center'>
-                        <Nav.Link href="#home">{user.firstName}{""} {user.lastName} <br/> {user.userType}</Nav.Link>
-                        <Nav.Link href="#link"> <img src="/images/superadminimages/avter.jpg"  className='avter-img' /> </Nav.Link>
+                 <Nav className='align-items-center justify-content-end'>
+                        <Navbar.Brand href="#home" className='text-white'>{userData?.firstName}{""} {userData?.lastName} <br/> Super Admin</Navbar.Brand>                        
+                        <Dropdown>
+                <Dropdown.Toggle variant="link" id="dropdown-profile">
+                  <img src="/images/superadminimages/avter.jpg"  className='avter-img  '  />
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu>
+                  <Dropdown.Item onClick={handleLogout} className="btn-logout" >Logout</Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
                  </Nav>
                 </Form>
             </Navbar.Collapse>
             </Navbar>
-      </header>
+   
     </div>
   )
 }

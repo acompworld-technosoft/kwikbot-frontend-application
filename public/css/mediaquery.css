@@ -215,4 +215,8 @@ h2.card-testomonial-heading {
 display: none;
 }
 
+.mt-lg-0-mt-sm-3{
+    margin-top: 20px !important;
+}
+
 }

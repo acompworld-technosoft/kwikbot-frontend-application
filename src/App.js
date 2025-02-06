@@ -1,44 +1,63 @@
 import "./App.css";
-import "./superadmin.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LoginPage from "./Components/Admin/loginPage";
 import ProfileAdmin from "./Components/Admin/profileadmin";
-import BillingInformation from "./Components/Admin/billing-information";
-import CancelRenewal from "./Components/Admin/cancel-renewal";
+import BillingInformation from "./Components/Admin/subscription/billing-information";
+import CancelRenewal from "./Components/Admin/subscription/cancel-renewal";
 import ChangePassword from "./Components/Admin/change-password";
-import Confirm from "./Components/Admin/confirm";
+import Confirm from "./Components/Admin/subscription/confirm";
 import Content from "./Components/Admin/content/content";
 import ContentHistory from "./Components/Admin/content/content-history";
-import Conversation from "./Components/Admin/Conversation";
-import Faqs from "./Components/Admin/faqs";
-import FirstTimeSubscription from "./Components/Admin/FirstTimeSubscription";
-import Invoices from "./Components/Admin/invoices";
-import MySubscription from "./Components/Admin/my-subscribption";
-import PaymentInfo from "./Components/Admin/payment-info";
-import PrivacyPolicy from "./Components/Admin/privacy-policy";
+import Coversation from "./Components/Admin/Conversation";
+
+import FirstTimeSubscription from "./Components/Admin/subscription/FirstTimeSubscription";
+import Invoices from "./Components/Admin/subscription/invoices";
+import MySubscription from "./Components/Admin/subscription/my-subscribption";
+import PaymentInfo from "./Components/Admin/subscription/payment-info";
+import PaymentMethod from "./Components/Admin/subscription/PaymentMethod";
+
 import KwikbotAdminPanel from "./Components/SuperAdmin/SuperAdminusers";
 import CustomerConversation from "./Components/SuperAdmin/customer-conversation";
 import Transaction from "./Components/SuperAdmin/transaction";
 import SuperAdminLogin from "./Components/SuperAdmin/superAdminloginPage";
 import ForgetPassword from "./Components/Admin/forgotPassword/ForgetPassword";
 import ResetPassword from "./Components/Admin/forgotPassword/ResetPassword";
-import Lead from "./Components/Admin/Lead";
+import { RoutesProtected } from "./Components/Admin/ProtectedRotes";
+import PayPalButton from "./Components/Admin/subscription/PayPal";
+import DayCare from "./Components/PublicPages/daycare";
+import Home from "./Components/PublicPages/home";
+import PrivacyPolicy from "./Components/PublicPages/privacy-policy";
+import FitNess from "./Components/PublicPages/fitness";
+import Ecomerce from "./Components/PublicPages/ecomerce";
+import Travelling from "./Components/PublicPages/travelling";
+import TermsOfUse from "./Components/PublicPages/terms-of-use";
+import BookAdemo from "./Components/PublicPages/book-a-demo";
+import Lead from "./Components/SuperAdmin/Lead";
+import ErrorPage from "./Components/PublicPages/errorPage";
+import { SuperAdminRoutesProtected } from "./Components/SuperAdmin/SuperAdminProtectedRoute";
+import SetPassword from "./Components/Admin/forgotPassword/setPassword";
+import SetNewPassword from "./Components/Admin/forgotPassword/setNewPassword";
+import AdminLead from "./Components/Admin/lead/lead";
+
 
 function App() {
   const isUserLoggedIn = !!localStorage.getItem("token");
+  const isSuperAdminLoggedIn = !!localStorage.getItem(
+    "kwikbot-superadmin-token"
+  );
 
   return (
     <div>
-      <BrowserRouter>
+      <BrowserRouter >
         <Routes>
           <Route
-            path="/"
+            path="/admin/login"
             element={
               isUserLoggedIn ? (
-                <Navigate to="/admin/profile" replace />
+                <Navigate to="/admin/coversation" replace />
               ) : (
                 <LoginPage />
               )
@@ -46,49 +65,117 @@ function App() {
           />
           <Route path="/admin/forgotpassword" element={<ForgetPassword />} />
           <Route path="/admin/resetpassword" element={<ResetPassword />} />
+          <Route path="/admin/set-password" element={<SetPassword/>} />
+          <Route path="/admin/set-new-password" element={<SetNewPassword />} />
 
           {/* Protected Routes */}
-        
-            <>
-              <Route path="/admin/profile" element={<ProfileAdmin />} />
-              <Route
-                path="/admin/billinginformation"
-                element={<BillingInformation />}
-              />
-              <Route path="/admin/cancelrenewal" element={<CancelRenewal />} />
-              <Route path="/admin/changepassword" element={<ChangePassword />} />
-              <Route path="/admin/confirm" element={<Confirm />} />
-              <Route path="/admin/addcontent" element={<Content />} />
-              <Route
-                path="/admin/contenthistory"
-                element={<ContentHistory />}
-              />
-              <Route path="/admin/conversation" element={<Conversation />} />
-              <Route path="/admin/conversation/:id" element={<Conversation />} />
-              <Route path="/admin/faqs" element={<Faqs />} />
-              <Route
-                path="/admin/firsttimesubscription"
-                element={<FirstTimeSubscription />}
-              />
-              <Route path="/admin/invoices" element={<Invoices />} />
-              <Route
-                path="/admin/mysubscribption"
-                element={<MySubscription />}
-              />
-              <Route path="/admin/paymentinfo" element={<PaymentInfo />} />
-              <Route path="/admin/privacypolicy" element={<PrivacyPolicy />} />
-              <Route path="/admin/lead" element={<Lead />} />
-            </>
-          
-      
 
-          <Route path="/superadmin/login" element={<SuperAdminLogin />} />
-          <Route path="/superadmin/users" element={<KwikbotAdminPanel />} />
-          <Route path="/superadmin/transactions" element={<Transaction />} />
+          <>
+            <Route
+              path="/admin/profile"
+              element={<RoutesProtected cmp={ProfileAdmin} />}
+            />
+            <Route
+              path="/admin/billinginformation"
+              element={<RoutesProtected cmp={BillingInformation} />}
+            />
+            <Route
+              path="/admin/paymentmethod"
+              element={<RoutesProtected cmp={PaymentMethod} />}
+            />
+            <Route
+              path="/admin/cancelrenewal"
+              element={<RoutesProtected cmp={CancelRenewal} />}
+            />
+            <Route
+              path="/admin/changepassword"
+              element={<RoutesProtected cmp={ChangePassword} />}
+            />
+            <Route
+              path="/admin/confirm"
+              element={<RoutesProtected cmp={Confirm} />}
+            />
+            <Route
+              path="/admin/addcontent"
+              element={<RoutesProtected cmp={Content} />}
+            />
+            <Route
+              path="/admin/contenthistory"
+              element={<RoutesProtected cmp={ContentHistory} />}
+            />
+            <Route
+              path="/admin/coversation"
+              element={<RoutesProtected cmp={Coversation} />}
+            />
+
+         
+
+             <Route path="/admin/conversation/:id"   element={<RoutesProtected cmp={Coversation} />} />
+
+            <Route
+              path="/admin/firsttimesubscription"
+              element={<RoutesProtected cmp={FirstTimeSubscription} />}
+            />
+            <Route
+              path="/admin/invoices"
+              element={<RoutesProtected cmp={Invoices} />}
+            />
+            <Route
+              path="/admin/mysubscribption"
+              element={<RoutesProtected cmp={MySubscription} />}
+            />
+            <Route
+              path="/admin/paymentinfo"
+              element={<RoutesProtected cmp={PaymentInfo} />}
+            />
+
+            <Route
+              path="/admin/pay-pal"
+              element={<RoutesProtected cmp={PayPalButton} />}
+            />
+            <Route
+              path="/admin/lead"
+              element={<RoutesProtected cmp={AdminLead} />}
+            />
+          </>
+
+          <Route
+            path="/superadmin/login"
+            element={
+              isSuperAdminLoggedIn ? (
+                <Navigate to="/superadmin/users" replace />
+              ) : (
+                <SuperAdminLogin />
+              )
+            }
+          />
+
+          <Route
+            path="/superadmin/users"
+            element={<SuperAdminRoutesProtected cmp={KwikbotAdminPanel} />}
+          />
+          <Route
+            path="/superadmin/transactions"
+            element={<SuperAdminRoutesProtected cmp={Transaction} />}
+          />
           <Route
             path="/superadmin/customerconversation"
-            element={<CustomerConversation />}
+            element={<SuperAdminRoutesProtected cmp={CustomerConversation} />}
           />
+          <Route
+            path="/superadmin/lead"
+            element={<SuperAdminRoutesProtected cmp={Lead} />}
+          />
+
+          <Route path="/daycare" element={<DayCare />} />
+          <Route path="/" element={<Home/>} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/fitness" element={<FitNess />} />
+          <Route path="/ecommerce" element={<Ecomerce />} />
+          <Route path="/travelling" element={<Travelling />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/book-a-demo" element={<BookAdemo />} />
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
       </BrowserRouter>
       <ToastContainer position="top-center" />

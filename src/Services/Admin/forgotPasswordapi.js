@@ -10,6 +10,17 @@ export const  sendotp = async (email) => {
     return api.data;
 };
   
+export const  sendSetPasswordotp = async (email) => {
+    const api = await apiRequest({
+        url: "/auth/set/password",
+        method: "post",
+        body: email,
+    });
+    console.log({ api })
+    return api.data;
+};
+
+
  export const verifyotp = async (newData) => {
     const api = await apiRequest({
         url: "/auth/verify/otp",

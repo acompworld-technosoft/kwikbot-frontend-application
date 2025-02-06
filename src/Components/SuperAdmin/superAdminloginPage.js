@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
-import {  useNavigate } from "react-router-dom";
-import {superAdminlogin } from "../../Services/SuperAdmin/authApiCall";
+import { useNavigate } from "react-router-dom";
+import { superAdminlogin } from "../../Services/SuperAdmin/authApiCall";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const Home = () => {
       [name]: value,
     });
   };
- //========  Login API Call =========//
+  //========  Login API Call =========//
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
@@ -49,7 +50,7 @@ const Home = () => {
 
         if (loginapiData.success) {
           const { token, user } = loginapiData.data;
-          localStorage.setItem("token", token);
+          localStorage.setItem("kwikbot-superadmin-token", token);
           localStorage.setItem("user", JSON.stringify(user));
           navigate("/superadmin/users");
         } else {
@@ -80,11 +81,17 @@ const Home = () => {
     <div>
       <main>
         <section>
-          <Container>
+          <Container className="text-center">
             <Row className="justify-content-md-center">
-              <Col lg={6} xs={6}>
+              <Col lg={6} xs={6} className="mx-auto">
                 <div className="brand-logo-image">
-                  <img src="/images/superadminimages/kwikbot-bran-logo.png" alt="logo" className="img-fluid" />
+                <Link to="/">
+                  <img
+                    src="/images/superadminimages/kwikbot-bran-logo.png"
+                    alt="logo"
+                    className="img-fluid"
+                  />
+                  </Link>
                 </div>
               </Col>
               <Col lg={6} xs={6}>
@@ -94,7 +101,7 @@ const Home = () => {
                       <Form.Control
                         type="email"
                         placeholder="Email"
-                        className={`input-soild ${
+                        className={`input-soild m-0 ${
                           errors.email ? "is-invalid" : ""
                         }`}
                         name="email"
@@ -102,17 +109,19 @@ const Home = () => {
                         onChange={handleInputChange}
                         onFocus={handleInputFocus}
                       />
-                      {errors.email && (
-                        <div  className="invalid-feedback">{errors.email}</div>
-                      )}
-                     
+
+                      <div className="email-content-h ">
+                        {errors.email && (
+                          <div className="message-text">{errors.email}</div>
+                        )}
+                      </div>
                     </Form.Group>
 
                     <Form.Group controlId="formBasicPassword">
                       <Form.Control
                         type="password"
                         placeholder="Password"
-                        className={`input-soild ${
+                        className={`input-soild m-0 ${
                           errors.password ? "is-invalid" : ""
                         }`}
                         name="password"
@@ -120,25 +129,21 @@ const Home = () => {
                         onChange={handleInputChange}
                         onFocus={handleInputFocus}
                       />
-                        <div className="invalid-feedback" >
-                      {errors.password && (
-                      
-                       <>{errors.password}  </>                       
-                      )}
+
+                      <div className="email-content-h ">
+                        {errors.password && (
+                          <div className="message-text">{errors.password} </div>
+                        )}
                       </div>
                     </Form.Group>
                     <button
                       type="submit"
-                      className="login-btn-superadmin"
+                      className="login-btn-superadmin mt-0"
                       onClick={handleFormSubmit}
                     >
                       Login
                     </button>
-                    <div className="text-right mt-3">
-                      {/* <a href="#" className="forgot-password">
-                        Reset password?
-                      </a> */}
-                    </div>
+                    <div className="text-right mt-3"></div>
                   </Form>
                 </div>
               </Col>

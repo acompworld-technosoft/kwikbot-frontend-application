@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { loginRequest } from '../../Services/Admin/authApiCall';
 import { toast } from 'react-toastify';
 
@@ -40,12 +40,15 @@ const Home = () => {
         const { token, user } = responseData.data;
         localStorage.setItem('token', token);
         localStorage.setItem('userid', user._id);
-        localStorage.setItem('botCode', user.botCode);
+        localStorage.setItem("clientId", user.clientId);
+        localStorage.setItem("botCode", user.botCode);
        
-        navigate('/admin/profile');
+
+        navigate('/admin/lead');
       }else {
         toast.error(responseData.message);
       }
+
     
     } catch (error) {
      if (error.response) {
@@ -66,17 +69,15 @@ const Home = () => {
       [name]: "",
     }));
   };
-
   
-
   return (
     <div>
       <header>
         <nav className="navbar navbar-expand-lg">
           <div className="container">
-            <a className="navbar-brand" href="#">
+            <Link to="/" className="navbar-brand" >
               <img className="" src="/images/kwikbot-bran-logo.png" alt="" />
-            </a>
+            </Link>
             <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"></span>
             </button>

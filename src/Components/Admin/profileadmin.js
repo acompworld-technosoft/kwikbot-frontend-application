@@ -10,11 +10,15 @@ const ProfileAdmin = () => {
  const [errormessage, setErrorMessage] = useState("");
 
   const [data, setData] = useState({
+    Name:'',
+    lastName: "",
     firstName: "",
     email: "",
     organizationName: "",
+    userType: "ClientUser",
     websiteUrl: "",
   });
+
 
   useEffect(() => {
     fetchData();
@@ -23,11 +27,11 @@ const ProfileAdmin = () => {
   const fetchData = async () => {
     try {
     const apidata = await userData(userid);
-    localStorage.setItem("clientId", apidata.data.clientId);
+
   
     setData({
       ...data,
-      firstName: apidata.data.firstName,
+      Name: apidata.data.firstName  + " " + apidata.data.lastName,
       email: apidata.data.email,
       organizationName: apidata.data.organizationName,
       websiteUrl: apidata.data.websiteUrl,
@@ -35,6 +39,7 @@ const ProfileAdmin = () => {
     } catch (err) {
       console.log(err.response.data.message);
     }
+
 
   };
 
@@ -47,18 +52,22 @@ const ProfileAdmin = () => {
   const handleSave = async (e) => {
     e.preventDefault();
    const newErrors = {};
-    if (!data.firstName) {
-      newErrors.firstName = "Name is required";
-    } else if (!/^[a-zA-Z ]+$/.test(data.firstName)) {
-      newErrors.firstName = "Please enter valid Name";
-    }
+    if (!data.Name) {
+      newErrors.Name = "Name is required";
+    } 
     if (!data.organizationName) {
       newErrors.organizationName = "Organization name is required";
     } 
     setErrorMessage(newErrors);
+    
+    const name = data.Name.split(" ");
+    const firstName = name[0];
+    const lastName = name.slice(1).join(" ");
+
+
 if (Object.keys(newErrors).length === 0) {
     try {
-      const api = await updateUserProfile({ userid, data });
+      const api = await updateUserProfile({ userid, data: { firstName, lastName, organizationName: data.organizationName ,email: data.email , userType: data.userType, websiteUrl: data.websiteUrl }  });
 
       if (api.success) {
         toast.success(api.message);
@@ -86,7 +95,7 @@ if (Object.keys(newErrors).length === 0) {
     <div>
       <Header />
       <main>
-        <section className="profile-page">
+        <section className="profile-page  heightcontrol">
           <div className="container">
             <div className="row justify-content-center">
               <div className="col-lg-5">
@@ -108,8 +117,8 @@ if (Object.keys(newErrors).length === 0) {
                       <input
                         type="text"
                         className="input-filed-profile"
-                        name="firstName"
-                        value={data.firstName}
+                        name="Name"
+                        value={data.Name}
                         onChange={handleChange}
                         onFocus={handleInputFocus}
                       />
@@ -121,7 +130,7 @@ if (Object.keys(newErrors).length === 0) {
                     </div>
                     <div style={{height:"50px", paddingTop:"5px"}}>
                       <span style={{ color: "red", textAlign: "center"}}>
-                        {errormessage.firstName}
+                        {errormessage.Name}
                       </span>
                       </div>
 
@@ -129,6 +138,7 @@ if (Object.keys(newErrors).length === 0) {
                       <input
                         type="email"
                         className="input-filed-profile"
+                        name="email"
                         value={data.email}
                         disabled
                       />
@@ -136,7 +146,6 @@ if (Object.keys(newErrors).length === 0) {
                         Email ID
                       </label>
                     </div>
-
                     <div className="position-relative">
                       <input
                         type="text"
@@ -157,25 +166,21 @@ if (Object.keys(newErrors).length === 0) {
                       </span>
                       </div>
 
-<div className="position-relative">
-                      <input
-                        type="text"
-                        className="input-filed-profile"
-                        name="websiteUrl"
-                        value={data.websiteUrl}
-                        onChange={handleChange}
-                        onFocus={handleInputFocus}
-                      />
-                      <label htmlFor="" className="po-ab-label">
-                        Website URL{" "}
-                      </label>
-                      
-                    </div>
-                    <div style={{height:"50px", paddingTop:"5px"}}>
-                      <span style={{ color: "red", textAlign: "center"}}>
-                        {errormessage.websiteUrl}
-                      </span>
+                      <div className="mb-5 position-relative">
+                        <input
+                          type="text"
+                          className="input-filed-profile"
+                          name="websiteUrl"
+                          value={data.websiteUrl}
+                          onChange={handleChange}
+                          onFocus={handleInputFocus}
+
+                        />
+                        <label htmlFor="" className="po-ab-label">
+                          Website URL
+                        </label>
                       </div>
+                      
 
                     <div className="set-power">
                       <a

@@ -1,4 +1,4 @@
-import { apiRequest } from "../../Services/Admin/apiRequest";
+import { apiRequest } from "./apiRequestSuperAdmin";
 
 
 
@@ -37,9 +37,9 @@ export const userRegister = async ({newData}) => {
 }
 
 ///=========== get all transaction of the client through the client id   ================
-export const getAllTransaction = async ({clientId}) => {
+export const getAllTransactionUser = async ({clientId}) => {
     const api = await apiRequest({
-        url: `/payment/admin/client/${clientId}`,
+        url: `/clients/transactions?clientId=${clientId}`,
         method: "get",
         header: true,
     });
@@ -49,7 +49,7 @@ export const getAllTransaction = async ({clientId}) => {
 ///=========== get all transaction of the client    ================
 export const getAllTransactionData = async () => {
     const api = await apiRequest({
-        url: `/payment/all`,
+        url: `/payments/all`,
         method: "get",
         header: true,
     });
@@ -75,4 +75,44 @@ export const updateClientData = async ({clientId, newData}) => {
         header: true,
     });
     return api.data;
+}
+
+export const blockClient = async ({clientId,blockdata}) => {
+    const api = await apiRequest({
+        url: `/users/block-unblock/${clientId}`,
+        method: "put",
+        body: blockdata,
+        header: true,
+    });
+    return api.data;
+}
+
+////===========client all content --------------
+
+export const getContent = async (userId) => {
+    const api = await apiRequest({
+        url: `/contents?userId=${userId}`,
+        method: "get",
+        header: true,
+    });
+    return api;
+}
+
+export const getConversationData = async (userId) => {
+    const api = await apiRequest({
+        url: `/clients/conversations/${userId}`,
+        method: "get",
+        header: true,
+    });
+    return api.data;
+}
+
+
+export const AllLeadData = async ()=>{
+    const api = await apiRequest({
+        url: "/lead-captures/lead-data",
+        method: "get",
+        header: true
+    });
+    return api.data
 }

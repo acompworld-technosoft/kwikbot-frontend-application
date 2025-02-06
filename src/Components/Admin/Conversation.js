@@ -101,10 +101,11 @@ const Coversation = () => {
   return (
     <div>
       <Header />
-      <section class="profile-page">
+      <section class="profile-page" style={{height: "100vh"}}>
         <div class="container">
           <div class="row justify-content-center">
             <div class="col-lg-12">
+
               <div class="heading-profile">
                 <h2>Conversation </h2>
               </div>
@@ -112,6 +113,8 @@ const Coversation = () => {
               <div class="d-flex">
                 <div class="first-conversation-list">
                   <div class="coversation-heading">Visitors</div>
+                   {conversationData.length > 0 ? (
+                     <>
 
                   {conversationData.map((item) => (
                     <div
@@ -140,17 +143,27 @@ const Coversation = () => {
                       </div>
                     </div>
                   ))}
+                  </>
+                ) : (
+                  <div class="text-center bg-white py-5  fs-5" style={{height: "300px"}}></div>
+                )}
                 </div>
+                
+
 
                 <div class="conversation-chat">
                   <div class="conversation-chat-heading">
                     {name==null ? <h4>{visitorId}</h4> : <h4>{name} {organization==null ? "" : "(" + organization + ")"}</h4>}
                     <p className="text-muted">{email}</p>         
                   </div>
-                  {visitorConversation.map((rec, index) => {
-                    const isBot = rec.isBot;
-                    {/* const Date = moment(
+                  {visitorConversation.length > 0 ? (
+                    <>
+                    {visitorConversation.map((rec, index) => {
+                      const isBot = rec.isBot;
+                      {/* const Date = moment(
                       conversationDate
+
+
                     ).format("Do MMM ");
                     const Time = moment(
                       conversationDate
@@ -172,9 +185,16 @@ const Coversation = () => {
                       </div>
                     );
                   })}
+                  </>
+                ) : (
+                  <div class=" bg-white py-5  fs-5" style={{height: "300px"}}>No conversation found</div>
+                )}
                 </div>
               </div>
+
+
             </div>
+
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import { apiRequest } from "./apiRequest";
 
-export const addContentapi = async ({addContent}) => {
+export const addContentapi = async (addContent) => {
     const api = await apiRequest({
         url: `/contents`,
         method: "post",
@@ -19,7 +19,7 @@ export const getContent = async (userId) => {
     return api;
 }
 
-export const UpdateContent = async ({contentId ,updateContent}) => {
+export const UpdateContent = async (contentId ,updateContent) => {
     const api = await apiRequest({
         url: `/contents/${contentId}`,
         method: "put",
@@ -34,5 +34,18 @@ export const deleteContent = async (contentId) => {
         method: "delete",
         header: true,
     });
+    return api;
+}
+
+//upload file
+export const uploadContentFile = async (formData) => {
+    const api = await apiRequest({
+        url: `/upload?for=content`,
+        method: "post",
+        body: formData,
+        header: true,
+
+    });
+
     return api;
 }
